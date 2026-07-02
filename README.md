@@ -1,27 +1,54 @@
-# nixStats
+<div align="center">
 
-A configurable statistics sidebar HUD.
-**Client-side only.**
+# 📊 nixStats
 
-## Features
+### A configurable statistics sidebar HUD.
+
+![](https://img.shields.io/badge/Fabric-DBA463?style=for-the-badge&logoColor=white)&nbsp;![](https://img.shields.io/badge/NeoForge-F16436?style=for-the-badge&logoColor=white)&nbsp;
+
+![](https://img.shields.io/badge/Minecraft-26.x_%7C_1.21.x-62B47A?style=flat-square) ![](https://img.shields.io/badge/Side-Client--side-3498DB?style=flat-square) ![](https://img.shields.io/badge/Architectury-not_required-2ECC71?style=flat-square) ![](https://img.shields.io/badge/Fabric_API-required_on_Fabric-4A90D9?style=flat-square) ![](https://img.shields.io/badge/License-MIT-blue?style=flat-square)
+
+</div>
+
+---
+
+## ✨ Features
 
 - Sidebar HUD: phantom timer, blocks/items/entities, any vanilla stat
 - Config screen (scale-to-fit on 26.x) with live preview
 - Keybind + /nixstats config to open settings
 
-## Versions & downloads
+## 📦 Versions &amp; downloads
 
-This repository uses a **branch-per-version** layout: this `main` branch is documentation only — the code for each Minecraft version lives on its own branch, each with its own history and `CHANGELOG.md`.
+> [!NOTE]
+> This repo uses a **branch-per-version** layout. This `main` branch is **documentation only** — the code for each Minecraft version lives on its own branch, each with an independent history and its own `CHANGELOG.md`.
 
-| Branch | Minecraft | Loaders | Dependencies | Notes |
-|--------|-----------|---------|--------------|-------|
-| [`multi_26.2`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.2) | 26.2.x | Fabric · NeoForge | Fabric API *(Fabric only)* | [changelog](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.2/CHANGELOG.md) |
-| [`multi_26.1`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.1) | 26.1, 26.1.1, 26.1.2 | Fabric · NeoForge | Fabric API *(Fabric only)* | [changelog](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.1/CHANGELOG.md) |
-| [`multi_1.21.11`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.11) | 1.21.11 | Fabric · NeoForge | Fabric API *(Fabric only)* | [changelog](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.11/CHANGELOG.md) |
-| [`multi_1.21.9`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.9) | 1.21.9–1.21.10 | Fabric · NeoForge | Fabric API *(Fabric only)* | [changelog](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.9/CHANGELOG.md) |
+| Branch | Minecraft | Loaders | Dependencies | Log |
+|:------:|:---------:|:-------:|:------------:|:---:|
+| [`multi_26.2`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.2) | 26.2.x | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.2/CHANGELOG.md) |
+| [`multi_26.1`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.1) | 26.1, 26.1.1, 26.1.2 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.1/CHANGELOG.md) |
+| [`multi_1.21.11`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.11) | 1.21.11 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.11/CHANGELOG.md) |
+| [`multi_1.21.9`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.9) | 1.21.9–1.21.10 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.9/CHANGELOG.md) |
 
-The `multi_*` branches each build a single **universal** jar that runs on **both** Fabric and NeoForge (per-loader `-fabric` / `-neoforge` jars are also produced), and are fully standalone — **no Architectury API at runtime**.
+> [!TIP]
+> Every `multi_*` branch builds **one universal jar** that runs on **both** Fabric and NeoForge (per-loader `-fabric` / `-neoforge` jars are produced too). All of them are fully standalone — **no Architectury API at runtime**.
 
-## License
+<details>
+<summary>🛠️ <b>Building from source</b></summary>
 
-MIT
+Each code branch is a self-contained Gradle project. Grab the branch for your Minecraft version:
+
+```bash
+git clone -b multi_26.2 https://github.com/LunixiaLIVE/nixStats.git
+cd nixStats
+./gradlew build
+```
+
+The universal jar lands in `build/libs/` — drop it into your `mods/` folder on either loader.
+</details>
+
+## 📄 License
+
+Released under the **MIT License**.
+
+<div align="center"><sub>⛏️ Part of the <a href="https://github.com/LunixiaLIVE">LunixiaLIVE</a> quality-of-life mod suite.</sub></div>
