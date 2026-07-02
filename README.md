@@ -31,7 +31,7 @@
 | [`multi_1.21.9`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.9) | 1.21.9–1.21.10 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.9/CHANGELOG.md) |
 
 > [!TIP]
-> Every `multi_*` branch builds **one universal jar** that runs on **both** Fabric and NeoForge (per-loader `-fabric` / `-neoforge` jars are produced too). All of them are fully standalone — **no Architectury API at runtime**.
+> Every `multi_*` branch builds **one jar that runs on both Fabric and NeoForge**. On 26.x that's a shared universal jar (Minecraft is unobfuscated there); on 1.21.x it's a jar-in-jar bundle (`-multi.jar`) with the Fabric and NeoForge builds nested inside, each loader picking its own. Per-loader `-fabric` / `-neoforge` jars are produced too (`build/staging/`). All fully standalone — **no Architectury API at runtime**.
 
 <details>
 <summary>🛠️ <b>Building from source</b></summary>
