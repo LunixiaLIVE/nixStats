@@ -6,7 +6,8 @@
   "description": "Configurable stat sidebar HUD. Track phantom timer, blocks mined, entities killed, and any other Minecraft statistic.",
   "authors": ["LunixiaLIVE"],
   "contact": {
-    "sources": "https://github.com/LunixiaLIVE/nixStats_multi"
+    "homepage": "https://github.com/LunixiaLIVE/Lunixia-Minecraft-QOL-Mods",
+    "sources": "https://github.com/LunixiaLIVE/nixStats"
   },
   "license": "MIT",
   "environment": "client",
