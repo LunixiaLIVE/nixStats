@@ -5,6 +5,22 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.2.4] — 2026-07-28
+
+**Fixes NeoForge loading on the 1.21.x back-port.**
+
+### Fixed
+- **NeoForge builds now load correctly.** The previous combined jar bundled Fabric-mapped classes NeoForge couldn't resolve, crashing on startup. The mod now ships as a **jar-in-jar bundle** (`-multi.jar`) so each loader loads its own correctly-mapped build. Fabric was unaffected.
+
+### Changed
+- Corrected the NeoForge Minecraft version range to exactly **1.21.11** (removed a bound referencing a non-existent 1.22 — Minecraft went 1.21.11 → 26.x).
+
+### Added
+- **Website link** in the mod list → the mod-suite hub.
+
+### Requirements
+- **Java 21**, Minecraft 1.21.11. Client-side; Fabric also needs Fabric API.
+
 ## [1.2.3] — 2026-07-01
 
 Multi-loader release for **Minecraft 1.21.11** (the latest 1.21 patch).
