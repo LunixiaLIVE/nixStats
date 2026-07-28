@@ -5,6 +5,20 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.2.4] — 2026-07-28
+
+Metadata and packaging polish. No gameplay changes.
+
+### Added
+- **Website link** in the mod list (Mod Menu / NeoForge mods screen) → the mod-suite hub.
+
+### Changed
+- Renamed the combined output jar from `-universal` to `-multi` for consistent naming.
+- Corrected a broken source-repository link in the mod metadata.
+
+### Requirements
+- **Java 25**, Minecraft 26.2.x. Client-side; Fabric also needs Fabric API.
+
 ## [1.2.3] — 2026-07-01
 
 First multi-loader release for **Minecraft 26.x** (the 26.2.x line).
