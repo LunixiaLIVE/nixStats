@@ -5,6 +5,16 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.2.4] — 2026-07-28
+
+Housekeeping — packaging only. No gameplay changes.
+
+### Changed
+- Renamed the combined output jar from `-universal` to `-multi` for consistent naming across all versions.
+
+### Requirements
+- **Java 25**, Minecraft 26.1.x. Client-side; Fabric also needs Fabric API.
+
 ## [1.2.3] — 2026-07-01
 
 First multi-loader release for **Minecraft 26.x** (the 26.1.x line).
