@@ -13,7 +13,7 @@ import net.minecraft.stats.Stats;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * Common (loader-agnostic) client logic for nixStats. No mod-loader API here —
+ * Common (loader-agnostic) client logic for nixStats. No mod-loader API here â€”
  * the Fabric and NeoForge entrypoints wire their native client events and call
  * these handlers. No Architectury runtime dependency.
  */
@@ -25,7 +25,9 @@ public final class NixStatsClient {
     private static int lastRemaining = PHANTOM_THRESHOLD;
     private static int syncTick      = 0;
     private static KeyMapping openConfigKey;
+    private static KeyMapping toggleHudKey;
     private static KeyMapping.Category configCategory;
+    private static boolean openConfigRequested = false;
 
     private NixStatsClient() {}
 
@@ -53,6 +55,21 @@ public final class NixStatsClient {
             configCategory
         );
         return openConfigKey;
+    }
+
+    /** Build the (unbound) show/hide keybind. Shares the config category; the platform registers it. */
+    public static KeyMapping createToggleKey() {
+        if (configCategory == null) {
+            configCategory = KeyMapping.Category.register(
+                Identifier.fromNamespaceAndPath(MOD_ID, "config")
+            );
+        }
+        toggleHudKey = new KeyMapping(
+            "key.nixstats.toggle",
+            GLFW.GLFW_KEY_UNKNOWN,
+            configCategory
+        );
+        return toggleHudKey;
     }
 
     /** Per-client-tick logic. Call from the loader's end-client-tick event. */
@@ -84,6 +101,20 @@ public final class NixStatsClient {
         if (openConfigKey != null && openConfigKey.consumeClick()) {
             client.execute(NixStatsClient::openConfig);
         }
+
+        // Show/hide the HUD; persists so it stays hidden across sessions.
+        if (toggleHudKey != null && toggleHudKey.consumeClick()) {
+            NixStatsConfig cfg = NixStatsConfig.get();
+            cfg.hudHidden = !cfg.hudHidden;
+            NixStatsConfig.save();
+        }
+
+        // The /nixstats command sets this flag; open the screen here (on the client tick)
+        // so it isn't clobbered by the chat screen closing right after the command runs.
+        if (openConfigRequested) {
+            openConfigRequested = false;
+            client.execute(NixStatsClient::openConfig);
+        }
     }
 
     /** Open the config screen. */
@@ -92,17 +123,16 @@ public final class NixStatsClient {
     }
 
     /**
-     * Register the {@code /nixstats config} client command. Source-type agnostic so
-     * it works on both Fabric's client dispatcher and NeoForge's CommandSourceStack.
+     * Register the {@code /nixstats} client command, which opens the config screen.
+     * Source-type agnostic so it works on both Fabric's client dispatcher and NeoForge's.
      */
     public static <S> void registerClientCommand(CommandDispatcher<S> dispatcher) {
         dispatcher.register(
             LiteralArgumentBuilder.<S>literal("nixstats")
-                .then(LiteralArgumentBuilder.<S>literal("config")
-                    .executes(ctx -> {
-                        Minecraft.getInstance().execute(NixStatsClient::openConfig);
-                        return 1;
-                    }))
+                .executes(ctx -> {
+                    openConfigRequested = true;
+                    return 1;
+                })
         );
     }
 }

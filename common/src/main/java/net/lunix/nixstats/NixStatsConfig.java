@@ -32,7 +32,7 @@ public class NixStatsConfig {
     // Text scale relative to HUD scale: 0.5 to 2.0
     public float textScale = 1.0f;
 
-    // Extra padding added to each column's content width (0–20 base units)
+    // Extra padding added to each column's content width (0â€“20 base units)
     public int colPad = 2;
 
     // Sidebar title text
@@ -47,8 +47,14 @@ public class NixStatsConfig {
     public float thresholdWarning  = 0.5f;
     public float thresholdCritical = 0.2f;
 
-    // Multiplayer stat sync interval in seconds (1–10)
+    // Multiplayer stat sync interval in seconds (1â€“10)
     public int syncInterval = 5;
+
+    // HUD background/frame opacity, 0.10â€“1.00 (1.0 = fully opaque; text & icons stay opaque)
+    public float hudOpacity = 1.0f;
+
+    // Whether the HUD is hidden (toggled by the show/hide keybind)
+    public boolean hudHidden = false;
 
     // Tracked stats displayed in the sidebar (in order)
     public List<StatEntry> stats = new ArrayList<>();
@@ -67,6 +73,7 @@ public class NixStatsConfig {
                 if (instance.sidebarTitle == null) instance.sidebarTitle = "nixStats";
                 if (instance.textScale <= 0)       instance.textScale = 1.0f;
                 if (instance.colPad < 0)           instance.colPad = 2;
+                instance.hudOpacity = Math.max(0f, Math.min(1f, instance.hudOpacity));
                 if (instance.stats.isEmpty())      instance.stats.add(StatEntry.phantom());
             } catch (Exception e) {
                 instance = defaultConfig();

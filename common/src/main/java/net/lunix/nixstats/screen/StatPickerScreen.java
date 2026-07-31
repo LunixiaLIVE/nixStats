@@ -1,6 +1,8 @@
 package net.lunix.nixstats.screen;
 
+import net.lunix.nixstats.Advancements;
 import net.lunix.nixstats.StatEntry;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -24,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -33,24 +36,27 @@ public class StatPickerScreen extends Screen {
     private static final int CELL_SIZE  = 18;
     private static final int CAT_BAR_H  = 20;
     private static final int TEXT_ROW_H = 13;
+    private static final int ADV_INDENT = 10;   // indent of advancements under a namespace header
 
-    // Internal type keys — General sub-types use "general_*" here but store "custom" in StatEntry
+    // Internal type keys â€” General sub-types use "general_*" here but store "custom" in StatEntry
     private static final String[] STAT_TYPES = {
         "phantom",
         "general_counts", "general_distances", "general_time",
         "block_mined", "item_used", "item_crafted",
         "item_broken", "item_picked_up", "item_dropped",
-        "entity_killed", "entity_killed_by"
+        "entity_killed", "entity_killed_by",
+        "advancement_individual"
     };
     private static final String[] CAT_LABELS = {
         "Phantom Timer",
         "General: Counts", "General: Distances", "General: Time",
         "Items: Mined", "Items: Used", "Items: Crafted",
         "Items: Broken", "Items: Picked Up", "Items: Dropped",
-        "Mobs: Killed", "Mobs: Killed By"
+        "Mobs: Killed", "Mobs: Killed By",
+        "Advancements"
     };
 
-    // Stat type helpers — used by both the picker and the sidebar formatter
+    // Stat type helpers â€” used by both the picker and the sidebar formatter
     public static boolean isTimeStat(String id) {
         String path = stripNamespace(id);
         return path.endsWith("_time") || path.startsWith("time_");
@@ -108,6 +114,9 @@ public class StatPickerScreen extends Screen {
 
     private Set<Item> craftableItemsCache = null;
 
+    // Namespaces expanded in the advancements tree (empty = everything collapsed by default).
+    private final Set<String> expandedAdv = new HashSet<>();
+
     public StatPickerScreen(Screen parent, Consumer<StatEntry> callback) {
         super(Component.literal("Add Stat"));
         this.parent   = parent;
@@ -116,7 +125,8 @@ public class StatPickerScreen extends Screen {
 
     private boolean isTextList() {
         String t = STAT_TYPES[categoryIdx];
-        return t.equals("general_counts") || t.equals("general_distances") || t.equals("general_time");
+        return t.equals("general_counts") || t.equals("general_distances") || t.equals("general_time")
+            || t.equals("advancement_individual");
     }
 
     private String[][] currentTextData() {
@@ -135,6 +145,46 @@ public class StatPickerScreen extends Screen {
             }
             default -> new String[0][];
         };
+    }
+
+    /**
+     * The Advancements tab as a collapsible tree. Rows are tagged in slot 0:
+     * <ul>
+     *   <li>{@code "#all"}   â€” grand total across all namespaces (slot 2 = display text)</li>
+     *   <li>{@code "#ns"}    â€” namespace header (slot 1 = namespace, slot 2 = display text)</li>
+     *   <li>{@code "#nsall"} â€” total for one namespace (slot 1 = namespace)</li>
+     *   <li>{@code "#adv"}   â€” an advancement (slot 1 = id, slot 2 = title)</li>
+     * </ul>
+     * A search auto-expands every group and hides the total rows (you're hunting a specific one).
+     */
+    private List<String[]> buildGroupedAdvRows(String search) {
+        List<String[]> rows = new ArrayList<>();
+        boolean searching = !search.isEmpty();
+        Map<String, List<String[]>> grouped = Advancements.groupedByNamespace(Minecraft.getInstance());
+
+        // Grand total first â€” a running count across every namespace.
+        if (!searching && !grouped.isEmpty())
+            rows.add(new String[]{"#all", "", "All Advancements"});
+
+        for (Map.Entry<String, List<String[]>> e : grouped.entrySet()) {
+            String ns = e.getKey();
+            List<String[]> items = e.getValue();
+            if (searching) {
+                List<String[]> filtered = new ArrayList<>();
+                for (String[] it : items)
+                    if (it[1].toLowerCase().contains(search) || it[0].contains(search)) filtered.add(it);
+                items = filtered;
+            }
+            if (items.isEmpty()) continue;
+            boolean collapsed = !searching && !expandedAdv.contains(ns);
+            rows.add(new String[]{"#ns", ns, (collapsed ? "+ " : "- ") + toLabel(ns) + " (" + items.size() + ")"});
+            if (!collapsed) {
+                // First entry under a namespace is its own total.
+                if (!searching) rows.add(new String[]{"#nsall", ns, "All"});
+                for (String[] it : items) rows.add(new String[]{"#adv", it[0], it[1]});
+            }
+        }
+        return rows;
     }
 
     @Override
@@ -191,6 +241,11 @@ public class StatPickerScreen extends Screen {
 
         if (isTextList()) {
             displayedItems = List.of();
+            // Individual advancements render as a collapsible per-namespace tree.
+            if (STAT_TYPES[categoryIdx].equals("advancement_individual")) {
+                displayedCustomStats = buildGroupedAdvRows(search);
+                return;
+            }
             displayedCustomStats = new ArrayList<>();
             for (String[] stat : currentTextData()) {
                 if (search.isEmpty() || stat[1].toLowerCase().contains(search) || stat[0].contains(search))
@@ -335,7 +390,19 @@ public class StatPickerScreen extends Screen {
             boolean hovered = mouseX >= gridX && mouseX < gridX + gridW
                            && mouseY >= ry && mouseY < ry + TEXT_ROW_H;
             if (hovered) g.fill(gridX, ry, gridX + gridW, ry + TEXT_ROW_H, 0x60FFFFFF);
-            g.text(font, Component.literal(stat[1]), gridX + 3, ry + 2, 0xFFFFFFFF);
+            String kind = stat.length >= 3 ? stat[0] : "";
+            switch (kind) {
+                case "#all"   -> // Grand total â€” aqua, flush left.
+                    g.text(font, Component.literal(stat[2]), gridX + 3, ry + 2, 0xFF55FFFF);
+                case "#ns"    -> // Namespace header â€” gold, flush left.
+                    g.text(font, Component.literal(stat[2]), gridX + 3, ry + 2, 0xFFFFAA00);
+                case "#nsall" -> // Namespace total â€” aqua, indented.
+                    g.text(font, Component.literal(stat[2]), gridX + 3 + ADV_INDENT, ry + 2, 0xFF55FFFF);
+                case "#adv"   -> // Advancement â€” white, indented.
+                    g.text(font, Component.literal(stat[2]), gridX + 3 + ADV_INDENT, ry + 2, 0xFFFFFFFF);
+                default       -> // Flat text-list rows (General stats).
+                    g.text(font, Component.literal(stat[1]), gridX + 3, ry + 2, 0xFFFFFFFF);
+            }
         }
 
         int total = displayedCustomStats.size();
@@ -361,7 +428,21 @@ public class StatPickerScreen extends Screen {
                     int ry = gridY + i * TEXT_ROW_H;
                     if (mx >= gridX && mx < gridX + gridW && my >= ry && my < ry + TEXT_ROW_H) {
                         String[] stat = displayedCustomStats.get(scrollOffset + i);
-                        callback.accept(new StatEntry("custom", stat[0], stat[1]));
+                        String kind = stat.length >= 3 ? stat[0] : "";
+                        // Namespace header: toggle collapse, stay on the picker.
+                        if ("#ns".equals(kind)) {
+                            if (!expandedAdv.remove(stat[1])) expandedAdv.add(stat[1]);
+                            scrollOffset = 0;
+                            updateDisplayedItems();
+                            return true;
+                        }
+                        StatEntry entry = switch (kind) {
+                            case "#all"   -> new StatEntry("advancement_total", null, "Advancements");
+                            case "#nsall" -> new StatEntry("advancement_total", stat[1], toLabel(stat[1]));
+                            case "#adv"   -> new StatEntry("advancement", stat[1], stat[2]);
+                            default       -> buildTextEntry(stat);
+                        };
+                        callback.accept(entry);
                         minecraft.setScreen(parent);
                         return true;
                     }
@@ -406,6 +487,11 @@ public class StatPickerScreen extends Screen {
             return true;
         }
         return super.mouseScrolled(mx, my, scrollX, scrollY);
+    }
+
+    /** Build a StatEntry from a flat text-list row (General stats). */
+    private StatEntry buildTextEntry(String[] stat) {
+        return new StatEntry("custom", stat[0], stat[1]);
     }
 
     private StatEntry buildEntry(Item item) {

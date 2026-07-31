@@ -5,6 +5,22 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.3.1] — 2026-07-31
+
+Advancement tracking, HUD show/hide, and opacity.
+
+### Added
+- **Advancement tracking** — a grand total across all namespaces, per-namespace totals (vanilla, a datapack, or a mod), and individual advancements with live `X/Y` criteria progress (✓ when complete). Browse them in a collapsible, searchable per-namespace tree; datapack and modded advancements are included automatically.
+- **Show / Hide HUD** keybind — toggles the whole sidebar (unbound by default; persists across sessions).
+- **HUD opacity** control (0%–100%) in the config screen; text and icons stay fully opaque.
+- Proper display names for the keybinds in Controls.
+
+### Fixed
+- Config-screen arrows (spinners, row reorder, remove) now render crisply on every Minecraft version (drawn as pixels instead of font glyphs).
+
+### Requirements
+- **Java 25**, Minecraft 26.1.x. Client-side; Fabric also needs Fabric API.
+
 ## [1.2.4] — 2026-07-28
 
 Housekeeping — packaging only. No gameplay changes.

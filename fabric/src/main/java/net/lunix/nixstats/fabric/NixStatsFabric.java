@@ -21,8 +21,9 @@ public class NixStatsFabric implements ClientModInitializer {
     public void onInitializeClient() {
         NixStatsClient.loadConfig(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
 
-        // Keybind — unbound by default, configurable in Controls
+        // Keybinds â€” unbound by default, configurable in Controls
         KeyMappingHelper.registerKeyMapping(NixStatsClient.createConfigKey());
+        KeyMappingHelper.registerKeyMapping(NixStatsClient.createToggleKey());
 
         // Client tick
         ClientTickEvents.END_CLIENT_TICK.register(NixStatsClient::clientTick);
