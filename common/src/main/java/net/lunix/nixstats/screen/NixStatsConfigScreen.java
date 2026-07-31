@@ -5,7 +5,6 @@ import net.lunix.nixstats.StatEntry;
 import net.lunix.nixstats.StatSidebar;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -26,7 +25,7 @@ public class NixStatsConfigScreen extends Screen {
 
     // Natural design height the layout needs; the whole window scales down to fit
     // when the GUI canvas is shorter than this (i.e. at high GUI scale).
-    private static final int DESIGN_MIN_H = 430;
+    private static final int DESIGN_MIN_H = 320;
 
     private static boolean tempLoaded        = false;
     private static String  tempTitle;
@@ -39,6 +38,7 @@ public class NixStatsConfigScreen extends Screen {
     private static int     tempColorCritical;
     private static float   tempThresholdWarning;
     private static float   tempThresholdCritical;
+    private static float   tempHudOpacity;
     private static List<StatEntry> tempStats;
     private static int     swatchSelRested;
     private static int     swatchSelWarning;
@@ -51,8 +51,8 @@ public class NixStatsConfigScreen extends Screen {
     // Layout — set each init
     private int panelX, panelW;
     private int boxTop, boxBottom;
-    private int titleEditY, scaleSliderY, textScaleSliderY, colPadSliderY, syncSliderY;
-    private int colorHeaderY, colorRowsBaseY, warnSliderY, critSliderY;
+    private int titleEditY, topSpinnersY;
+    private int colorHeaderY, colorRowsBaseY, botSpinnersY;
     private int statsHeaderY, statsListBaseY, addBtnY, buttonsY;
     private int innerX, innerW;
 
@@ -90,6 +90,7 @@ public class NixStatsConfigScreen extends Screen {
             tempColorCritical     = cfg.colorCritical;
             tempThresholdWarning  = cfg.thresholdWarning;
             tempThresholdCritical = cfg.thresholdCritical;
+            tempHudOpacity        = clampF(cfg.hudOpacity, 0f, 1f);
             tempStats             = deepCopy(cfg.stats);
             swatchSelRested       = findSwatch(tempColorRested);
             swatchSelWarning      = findSwatch(tempColorWarning);
@@ -118,14 +119,10 @@ public class NixStatsConfigScreen extends Screen {
         int y = panelY + 5;
 
         titleEditY       = y; y += 22;
-        scaleSliderY     = y; y += 19;
-        textScaleSliderY = y; y += 19;
-        colPadSliderY    = y; y += 19;
-        syncSliderY      = y; y += 24;
+        topSpinnersY     = y; y += 26;
         colorHeaderY     = y; y += 14;
-        colorRowsBaseY   = y; y += 78;
-        warnSliderY      = y; y += 19;
-        critSliderY      = y; y += 24;
+        colorRowsBaseY   = y; y += 18;
+        botSpinnersY     = y; y += 26;
         statsHeaderY     = y; y += 14;
         statsListBaseY   = y;
 
@@ -156,59 +153,8 @@ public class NixStatsConfigScreen extends Screen {
         titleBox.setResponder(t -> tempTitle = t);
         addRenderableWidget(titleBox);
 
-        double scaleVal = (tempScale - 0.1) / 2.9;
-        addRenderableWidget(new AbstractSliderButton(innerX, scaleSliderY, innerW, 16,
-                Component.literal("Scale: " + String.format("%.1f", (double) tempScale) + "x"), scaleVal) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Scale: " + String.format("%.2f", 0.1 + this.value * 2.9) + "x"));
-            }
-            @Override protected void applyValue() { tempScale = (float)(0.1 + this.value * 2.9); }
-        });
-
-        double textScaleVal = (tempTextScale - 0.5) / 1.5;
-        addRenderableWidget(new AbstractSliderButton(innerX, textScaleSliderY, innerW, 16,
-                Component.literal("Text: " + String.format("%.1f", (double) tempTextScale) + "x"), textScaleVal) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Text: " + String.format("%.2f", 0.5 + this.value * 1.5) + "x"));
-            }
-            @Override protected void applyValue() { tempTextScale = (float)(0.5 + this.value * 1.5); }
-        });
-
-        double colPadVal = tempColPad / 20.0;
-        addRenderableWidget(new AbstractSliderButton(innerX, colPadSliderY, innerW, 16,
-                Component.literal("Col Pad: " + tempColPad), colPadVal) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Col Pad: " + (int) Math.round(this.value * 20)));
-            }
-            @Override protected void applyValue() { tempColPad = (int) Math.round(this.value * 20); }
-        });
-
-        double syncVal = (tempSyncInterval - 1) / 59.0;
-        addRenderableWidget(new AbstractSliderButton(innerX, syncSliderY, innerW, 16,
-                Component.literal("Sync: Every " + tempSyncInterval + "s"), syncVal) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Sync: Every " + (1 + (int) Math.round(this.value * 59)) + "s"));
-            }
-            @Override protected void applyValue() { tempSyncInterval = 1 + (int) Math.round(this.value * 59); }
-        });
-
-        addRenderableWidget(new AbstractSliderButton(innerX, warnSliderY, innerW, 16,
-                Component.literal("Warning: " + Math.round(tempThresholdWarning * 100) + "%"),
-                tempThresholdWarning) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Warning: " + Math.round(this.value * 100) + "%"));
-            }
-            @Override protected void applyValue() { tempThresholdWarning = (float) this.value; }
-        });
-
-        addRenderableWidget(new AbstractSliderButton(innerX, critSliderY, innerW, 16,
-                Component.literal("Critical: " + Math.round(tempThresholdCritical * 100) + "%"),
-                tempThresholdCritical) {
-            @Override protected void updateMessage() {
-                setMessage(Component.literal("Critical: " + Math.round(this.value * 100) + "%"));
-            }
-            @Override protected void applyValue() { tempThresholdCritical = (float) this.value; }
-        });
+        // Scale/Text/Pad/Sync (top) and Warning/Critical (threshold) render as custom
+        // up/down spinners — see drawSpinnerRow() / spinnerRowClick().
 
         // + Add Stat (below scroll area, above bottom buttons)
         addRenderableWidget(Button.builder(Component.literal("+ Add Stat"), btn ->
@@ -256,29 +202,26 @@ public class NixStatsConfigScreen extends Screen {
         g.fill(panelX - 1, boxTop - 1, panelX + panelW + 1, boxBottom + 1, 0xFF555555);
         g.fill(panelX,     boxTop,     panelX + panelW,     boxBottom,     0xFF1E1E1E);
 
+        // Top settings row — Scale / Text / Pad / Sync up-down spinners
+        drawSpinnerRow(g, 0, 4, topSpinnersY, vMouseX, vMouseY);
+
         // Phantom colors section header
         g.centeredText(font, Component.literal("─ Phantom Colors ─"),
                 panelX + panelW / 2, colorHeaderY + 2, 0x888888);
 
-        // Color swatches
+        // Compact color line: label + current-color swatch per role (click to cycle presets)
         int[] rowColors = { tempColorRested, tempColorWarning, tempColorCritical };
-        int[] rowSels   = { swatchSelRested, swatchSelWarning, swatchSelCritical };
-
         for (int row = 0; row < 3; row++) {
-            int labelY  = colorRowsBaseY + row * 26;
-            int swatchY = labelY + 12;
-            for (int i = 0; i < PRESET_COLORS.length; i++) {
-                int sx = innerX + i * 13;
-                g.fill(sx - 1, swatchY - 1, sx + 11, swatchY + 11,
-                        rowSels[row] == i ? 0xFFFFFFFF : 0xFF444444);
-                g.fill(sx, swatchY, sx + 10, swatchY + 10, PRESET_COLORS[i]);
-            }
-            if (rowSels[row] == -1) {
-                int cx = innerX + PRESET_COLORS.length * 13 + 2;
-                g.fill(cx - 1, swatchY - 1, cx + 11, swatchY + 11, 0xFFFFFFFF);
-                g.fill(cx, swatchY, cx + 10, swatchY + 10, rowColors[row]);
-            }
+            int cellX = innerX + row * (innerW / 3);
+            g.text(font, Component.literal(COLOR_ROW_LABELS[row]), cellX, colorRowsBaseY + 3, 0xFFCCCCCC);
+            int swX = cellX + font.width(COLOR_ROW_LABELS[row]) + 4;
+            int swY = colorRowsBaseY + 1;
+            g.fill(swX - 1, swY - 1, swX + 13, swY + 13, 0xFFAAAAAA);
+            g.fill(swX, swY, swX + 12, swY + 12, rowColors[row]);
         }
+
+        // Threshold row — Warning / Critical / Opacity up-down spinners
+        drawSpinnerRow(g, 4, 3, botSpinnersY, vMouseX, vMouseY);
 
         // Stats section header
         g.centeredText(font, Component.literal("─ Stats ─"),
@@ -303,22 +246,20 @@ public class NixStatsConfigScreen extends Screen {
                 boolean upHov = vMouseX >= innerX && vMouseX < innerX + 14
                              && vMouseY >= rowY  && vMouseY < rowY + 14;
                 g.fill(innerX, rowY, innerX + 14, rowY + 14, upHov ? 0xFF666666 : 0xFF3A3A3A);
-                g.centeredText(font, Component.literal("↑"), innerX + 7, rowY + 3,
-                        i > 0 ? 0xFFFFFFFF : 0xFF555555);
+                drawUpArrow(g, innerX + 7, rowY + 7, i > 0 ? 0xFFFFFFFF : 0xFF555555);
 
                 // ↓ fake button
                 boolean downHov = vMouseX >= innerX + 16 && vMouseX < innerX + 30
                                && vMouseY >= rowY      && vMouseY < rowY + 14;
                 g.fill(innerX + 16, rowY, innerX + 30, rowY + 14, downHov ? 0xFF666666 : 0xFF3A3A3A);
-                g.centeredText(font, Component.literal("↓"), innerX + 23, rowY + 3,
-                        i < n - 1 ? 0xFFFFFFFF : 0xFF555555);
+                drawDownArrow(g, innerX + 23, rowY + 7, i < n - 1 ? 0xFFFFFFFF : 0xFF555555);
 
                 // × fake button
                 boolean xHov = vMouseX >= innerX + innerW - 14 && vMouseX < innerX + innerW
                             && vMouseY >= rowY             && vMouseY < rowY + 14;
                 g.fill(innerX + innerW - 14, rowY, innerX + innerW, rowY + 14,
                         xHov ? 0xFF883333 : 0xFF3A3A3A);
-                g.centeredText(font, Component.literal("×"), innerX + innerW - 7, rowY + 3, 0xFFFF5555);
+                drawX(g, innerX + innerW - 7, rowY + 7, 0xFFFF5555);
 
                 // Icon (10×10 scaled from 16×16)
                 ItemStack icon = StatSidebar.getIcon(entry);
@@ -374,12 +315,6 @@ public class NixStatsConfigScreen extends Screen {
 
         super.extractRenderState(g, vMouseX, vMouseY, partialTick);
 
-        // Color row labels drawn last — on top of swatches
-        for (int row = 0; row < 3; row++) {
-            int labelY = colorRowsBaseY + row * 26;
-            g.text(font, Component.literal(COLOR_ROW_LABELS[row]), innerX, labelY, 0xFFCCCCCC);
-        }
-
         g.pose().popMatrix();
     }
 
@@ -388,19 +323,26 @@ public class NixStatsConfigScreen extends Screen {
         double mouseX = vx(event.x()), mouseY = vy(event.y());
         MouseButtonEvent translated = new MouseButtonEvent(mouseX, mouseY, event.buttonInfo());
 
-        if (!consumed && event.button() == 0) {
-            // Color swatches
+        // Compact color swatches: left-click = next preset, right-click = previous
+        if (!consumed && (event.button() == 0 || event.button() == 1)) {
             for (int row = 0; row < 3; row++) {
-                int swatchY = colorRowsBaseY + row * 26 + 12;
-                for (int i = 0; i < PRESET_COLORS.length; i++) {
-                    int sx = innerX + i * 13;
-                    if (mouseX >= sx && mouseX < sx + 10 && mouseY >= swatchY && mouseY < swatchY + 10) {
-                        applySwatchClick(row, i);
-                        return true;
-                    }
+                int cellX = innerX + row * (innerW / 3);
+                int swX = cellX + font.width(COLOR_ROW_LABELS[row]) + 4;
+                int swY = colorRowsBaseY + 1;
+                if (mouseX >= swX && mouseX < swX + 12 && mouseY >= swY && mouseY < swY + 12) {
+                    cycleColor(row, event.button() == 0 ? 1 : -1);
+                    return true;
                 }
             }
+        }
 
+        // Up/down spinners (top settings row + threshold row)
+        if (!consumed && event.button() == 0) {
+            if (spinnerRowClick(mouseX, mouseY, 0, 4, topSpinnersY)) return true;
+            if (spinnerRowClick(mouseX, mouseY, 4, 3, botSpinnersY)) return true;
+        }
+
+        if (!consumed && event.button() == 0) {
             // Stat row ↑↓× (manual hit-testing against visible rows)
             if (tempStats != null) {
                 int n = tempStats.size();
@@ -470,12 +412,94 @@ public class NixStatsConfigScreen extends Screen {
         return super.mouseScrolled(vx(mx), vy(my), scrollX, scrollY);
     }
 
-    private void applySwatchClick(int row, int idx) {
-        int color = PRESET_COLORS[idx];
+    private void cycleColor(int row, int dir) {
+        int sel = switch (row) {
+            case 0 -> swatchSelRested;
+            case 1 -> swatchSelWarning;
+            default -> swatchSelCritical;
+        };
+        int next = sel < 0 ? (dir > 0 ? 0 : PRESET_COLORS.length - 1)
+                           : (sel + dir + PRESET_COLORS.length) % PRESET_COLORS.length;
+        int color = PRESET_COLORS[next];
         switch (row) {
-            case 0 -> { tempColorRested   = color; swatchSelRested   = idx; }
-            case 1 -> { tempColorWarning  = color; swatchSelWarning  = idx; }
-            case 2 -> { tempColorCritical = color; swatchSelCritical = idx; }
+            case 0 -> { tempColorRested   = color; swatchSelRested   = next; }
+            case 1 -> { tempColorWarning  = color; swatchSelWarning  = next; }
+            case 2 -> { tempColorCritical = color; swatchSelCritical = next; }
+        }
+    }
+
+    private static final String[] SPIN_LABELS = { "Scale", "Text", "Pad", "Sync", "Warn", "Crit", "Opac" };
+
+    /** Draw a row of n up/down spinners starting at spinner id {@code startId}. */
+    private void drawSpinnerRow(GuiGraphicsExtractor g, int startId, int n, int rowY, int vmx, int vmy) {
+        int cellW = innerW / n;
+        int ctrlY = rowY + 10;
+        for (int c = 0; c < n; c++) {
+            int id = startId + c;
+            int cellX = innerX + c * cellW;
+            int ax = cellX;   // arrows on the LEFT, value to their right
+            g.text(font, Component.literal(SPIN_LABELS[id]), cellX, rowY, 0xFFCCCCCC);
+            boolean upHov = vmx >= ax && vmx < ax + 9 && vmy >= ctrlY - 1 && vmy < ctrlY + 7;
+            boolean dnHov = vmx >= ax && vmx < ax + 9 && vmy >= ctrlY + 7 && vmy < ctrlY + 15;
+            g.fill(ax, ctrlY - 1, ax + 9, ctrlY + 7,  upHov ? 0xFF666666 : 0xFF3A3A3A);
+            g.fill(ax, ctrlY + 7, ax + 9, ctrlY + 15, dnHov ? 0xFF666666 : 0xFF3A3A3A);
+            drawUpArrow(g, ax + 4, ctrlY + 3, 0xFFFFFFFF);
+            drawDownArrow(g, ax + 4, ctrlY + 11, 0xFFFFFFFF);
+            g.text(font, Component.literal(spinValue(id)), ax + 13, ctrlY + 1, 0xFFFFFFFF);
+        }
+    }
+
+    private boolean spinnerRowClick(double mx, double my, int startId, int n, int rowY) {
+        int cellW = innerW / n;
+        int ctrlY = rowY + 10;
+        for (int c = 0; c < n; c++) {
+            int ax = innerX + c * cellW;
+            if (mx >= ax && mx < ax + 9) {
+                if (my >= ctrlY - 1 && my < ctrlY + 7)  { spinAdjust(startId + c, 1);  return true; }
+                if (my >= ctrlY + 7 && my < ctrlY + 15) { spinAdjust(startId + c, -1); return true; }
+            }
+        }
+        return false;
+    }
+
+    private String spinValue(int id) {
+        return switch (id) {
+            case 0 -> String.format("%.1fx", tempScale);
+            case 1 -> String.format("%.1fx", tempTextScale);
+            case 2 -> String.valueOf(tempColPad);
+            case 3 -> tempSyncInterval + "s";
+            case 4 -> Math.round(tempThresholdWarning * 100) + "%";
+            case 5 -> Math.round(tempThresholdCritical * 100) + "%";
+            default -> Math.round(tempHudOpacity * 100) + "%";
+        };
+    }
+
+    private void spinAdjust(int id, int dir) {
+        switch (id) {
+            case 0 -> tempScale        = clampF(Math.round((tempScale + dir * 0.1f) * 10) / 10f, 0.1f, 3.0f);
+            case 1 -> tempTextScale    = clampF(Math.round((tempTextScale + dir * 0.1f) * 10) / 10f, 0.5f, 2.0f);
+            case 2 -> tempColPad       = (int) clampF(tempColPad + dir, 0, 20);
+            case 3 -> tempSyncInterval = (int) clampF(tempSyncInterval + dir, 1, 60);
+            case 4 -> tempThresholdWarning  = clampF(Math.round((tempThresholdWarning + dir * 0.05f) * 20) / 20f, 0f, 1f);
+            case 5 -> tempThresholdCritical = clampF(Math.round((tempThresholdCritical + dir * 0.05f) * 20) / 20f, 0f, 1f);
+            case 6 -> tempHudOpacity        = clampF(Math.round((tempHudOpacity + dir * 0.05f) * 20) / 20f, 0f, 1f);
+        }
+    }
+
+    private static float clampF(float v, float lo, float hi) { return Math.max(lo, Math.min(hi, v)); }
+
+    // Arrows/× drawn as pixel triangles rather than font glyphs — renders identically on every
+    // MC version and loader (some versions rasterize the ↑/↓/× glyphs oddly). Centered on (cx, cy).
+    private static void drawUpArrow(GuiGraphicsExtractor g, int cx, int cy, int color) {
+        for (int r = 0; r < 3; r++) g.fill(cx - r, cy - 1 + r, cx + r + 1, cy + r, color);
+    }
+    private static void drawDownArrow(GuiGraphicsExtractor g, int cx, int cy, int color) {
+        for (int r = 0; r < 3; r++) g.fill(cx - (2 - r), cy - 1 + r, cx + (2 - r) + 1, cy + r, color);
+    }
+    private static void drawX(GuiGraphicsExtractor g, int cx, int cy, int color) {
+        for (int i = -2; i <= 2; i++) {
+            g.fill(cx + i, cy + i, cx + i + 1, cy + i + 1, color);
+            g.fill(cx + i, cy - i, cx + i + 1, cy - i + 1, color);
         }
     }
 
@@ -491,6 +515,7 @@ public class NixStatsConfigScreen extends Screen {
         cfg.colorCritical      = tempColorCritical;
         cfg.thresholdWarning   = tempThresholdWarning;
         cfg.thresholdCritical  = tempThresholdCritical;
+        cfg.hudOpacity         = tempHudOpacity;
         cfg.stats              = deepCopy(tempStats);
     }
 
@@ -506,6 +531,7 @@ public class NixStatsConfigScreen extends Screen {
         tmp.colorCritical     = tempColorCritical;
         tmp.thresholdWarning  = tempThresholdWarning;
         tmp.thresholdCritical = tempThresholdCritical;
+        tmp.hudOpacity        = tempHudOpacity;
         tmp.stats             = deepCopy(tempStats);
         return tmp;
     }

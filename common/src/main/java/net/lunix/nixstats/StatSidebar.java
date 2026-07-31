@@ -1,13 +1,17 @@
 package net.lunix.nixstats;
 
 import net.lunix.nixstats.screen.StatPickerScreen;
+import net.minecraft.advancements.AdvancementHolder;
+import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stat;
 import net.minecraft.stats.Stats;
 import net.minecraft.stats.StatsCounter;
 import net.minecraft.world.item.ItemStack;
@@ -60,6 +64,7 @@ public class StatSidebar {
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
         float trs = scale * Math.max(0.1f, cfg.textScale);
+        float op  = Math.max(0f, Math.min(1f, cfg.hudOpacity));   // fades background/frame; text & icons stay opaque
 
         int b          = Math.max(1, Math.round(BORDER * scale));
         int th         = Math.round(TITLE_H * scale);
@@ -98,11 +103,11 @@ public class StatSidebar {
         int sh = Math.round(frameH(cfg) * scale);
 
         // Border + background
-        g.fill(x, y, x + sw, y + sh, COL_BORDER);
-        g.fill(x + b, y + b, x + sw - b, y + sh - b, COL_BG);
+        g.fill(x, y, x + sw, y + sh, withOpacity(COL_BORDER, op));
+        g.fill(x + b, y + b, x + sw - b, y + sh - b, withOpacity(COL_BG, op));
 
         // Title bar
-        g.fill(x + b, y + b, x + sw - b, y + b + th, COL_TITLE_BG);
+        g.fill(x + b, y + b, x + sw - b, y + b + th, withOpacity(COL_TITLE_BG, op));
 
         // Title text (centered)
         String titleStr = cfg.sidebarTitle != null ? cfg.sidebarTitle : "nixStats";
@@ -113,7 +118,7 @@ public class StatSidebar {
 
         // Separator below title
         int sepY = y + b + th;
-        g.fill(x + b, sepY, x + sw - b, sepY + b, COL_BORDER);
+        g.fill(x + b, sepY, x + sw - b, sepY + b, withOpacity(COL_BORDER, op));
 
         if (stats == null || stats.isEmpty()) return;
 
@@ -124,7 +129,7 @@ public class StatSidebar {
             StatEntry entry = stats.get(i);
             int rowY = rowsTopY + i * rh;
 
-            if (i % 2 == 1) g.fill(x + b, rowY, x + sw - b, rowY + rh, 0x0AFFFFFF);
+            if (i % 2 == 1) g.fill(x + b, rowY, x + sw - b, rowY + rh, withOpacity(0x0AFFFFFF, op));
 
             // Icon (col1)
             ItemStack icon = getIcon(entry);
@@ -170,8 +175,22 @@ public class StatSidebar {
         return t + "..";
     }
 
+    /** Scale a color's alpha channel by {@code op} (0..1), leaving RGB intact. */
+    private static int withOpacity(int argb, float op) {
+        int a = Math.round(((argb >>> 24) & 0xFF) * op);
+        return (a << 24) | (argb & 0xFFFFFF);
+    }
+
     public static int readStatValue(StatEntry entry, Minecraft mc) {
         if ("phantom".equals(entry.statType)) return NixStatsClient.getLastRemaining();
+        // Advancements: 1/0 for a single advancement (drives the ✓ color), done-count for a total.
+        if ("advancement".equals(entry.statType)) {
+            AdvancementHolder h = Advancements.byId(mc, entry.targetId);
+            return Advancements.isDone(Advancements.progress(mc, h)) ? 1 : 0;
+        }
+        if ("advancement_total".equals(entry.statType)) {
+            return Advancements.total(mc, entry.targetId)[0];
+        }
         if (mc.player == null) return 0;
         // In singleplayer, read directly from the integrated server for real-time accuracy
         StatsCounter stats = mc.player.getStats();
@@ -229,23 +248,62 @@ public class StatSidebar {
     }
 
     public static String formatValue(StatEntry entry, int raw) {
+        // Phantom timer is the mod's own countdown — keep the mm:ss display.
         if ("phantom".equals(entry.statType)) {
             if (raw <= 0) return "0:00";
             int secs = raw / 20;
             return String.format("%d:%02d", secs / 60, secs % 60);
         }
-        if ("custom".equals(entry.statType) && StatPickerScreen.isTimeStat(entry.targetId)) {
-            if (raw <= 0) return "0:00:00";
-            int secs = raw / 20;
-            return String.format("%d:%02d:%02d", secs / 3600, (secs % 3600) / 60, secs % 60);
+        // Individual advancement: use Minecraft's own progress text ("12/50"), ✓ when done —
+        // matches the vanilla advancements screen exactly.
+        if ("advancement".equals(entry.statType)) {
+            Minecraft mc = Minecraft.getInstance();
+            AdvancementProgress p = Advancements.progress(mc, Advancements.byId(mc, entry.targetId));
+            if (p == null) return "—";          // em dash — not synced yet
+            if (p.isDone()) return "✓";         // ✓
+            Component t = p.getProgressText();
+            if (t != null) {
+                String s = t.getString();
+                if (!s.isEmpty()) return s;          // e.g. "12/50" for multi-criteria
+            }
+            return "✗";                          // ✗
         }
-        if (raw >= 1_000_000_000) return String.format("%.1fB", raw / 1_000_000_000.0);
-        if (raw >= 1_000_000)     return String.format("%.1fM", raw / 1_000_000.0);
-        if (raw >= 1_000)         return String.format("%.1fK", raw / 1_000.0);
-        return String.valueOf(raw);
+        // Advancement total (grand or per-namespace): done/total.
+        if ("advancement_total".equals(entry.statType)) {
+            int[] dt = Advancements.total(Minecraft.getInstance(), entry.targetId);
+            return dt[0] + "/" + dt[1];
+        }
+        // Everything else: delegate to Minecraft's own formatter for that stat, so counts,
+        // distance, time and damage all render exactly like the vanilla stats screen.
+        Stat<?> stat = resolveStat(entry);
+        return stat != null ? stat.format(raw) : String.valueOf(raw);
+    }
+
+    /** Resolve the underlying Minecraft {@link Stat} for a tracked entry (null if unresolvable). */
+    private static Stat<?> resolveStat(StatEntry entry) {
+        if (entry.targetId == null) return null;
+        Identifier loc = Identifier.tryParse(entry.targetId);
+        if (loc == null) return null;
+        try {
+            return switch (entry.statType) {
+                case "block_mined"      -> BuiltInRegistries.BLOCK.getOptional(loc).map(x -> (Stat<?>) Stats.BLOCK_MINED.get(x)).orElse(null);
+                case "item_used"        -> BuiltInRegistries.ITEM.getOptional(loc).map(x -> (Stat<?>) Stats.ITEM_USED.get(x)).orElse(null);
+                case "item_crafted"     -> BuiltInRegistries.ITEM.getOptional(loc).map(x -> (Stat<?>) Stats.ITEM_CRAFTED.get(x)).orElse(null);
+                case "item_broken"      -> BuiltInRegistries.ITEM.getOptional(loc).map(x -> (Stat<?>) Stats.ITEM_BROKEN.get(x)).orElse(null);
+                case "item_picked_up"   -> BuiltInRegistries.ITEM.getOptional(loc).map(x -> (Stat<?>) Stats.ITEM_PICKED_UP.get(x)).orElse(null);
+                case "item_dropped"     -> BuiltInRegistries.ITEM.getOptional(loc).map(x -> (Stat<?>) Stats.ITEM_DROPPED.get(x)).orElse(null);
+                case "entity_killed"    -> BuiltInRegistries.ENTITY_TYPE.getOptional(loc).map(x -> (Stat<?>) Stats.ENTITY_KILLED.get(x)).orElse(null);
+                case "entity_killed_by" -> BuiltInRegistries.ENTITY_TYPE.getOptional(loc).map(x -> (Stat<?>) Stats.ENTITY_KILLED_BY.get(x)).orElse(null);
+                case "custom"           -> BuiltInRegistries.CUSTOM_STAT.getOptional(loc).map(x -> (Stat<?>) Stats.CUSTOM.get(x)).orElse(null);
+                default -> null;
+            };
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public static int getValueColor(StatEntry entry, int raw, NixStatsConfig cfg) {
+        if ("advancement".equals(entry.statType)) return raw >= 1 ? 0xFF55FF55 : COL_VALUE;
         if (!"phantom".equals(entry.statType)) return COL_VALUE;
         float fraction = Math.min(1f, (float) raw / NixStatsClient.PHANTOM_THRESHOLD);
         if (fraction > cfg.thresholdWarning)  return cfg.colorRested;
@@ -255,6 +313,19 @@ public class StatSidebar {
 
     public static ItemStack getIcon(StatEntry entry) {
         if ("phantom".equals(entry.statType)) return new ItemStack(Items.PHANTOM_MEMBRANE);
+        if ("advancement".equals(entry.statType)) {
+            Minecraft mc = Minecraft.getInstance();
+            AdvancementHolder h = Advancements.byId(mc, entry.targetId);
+            if (h != null && h.value().display().isPresent())
+                return h.value().display().get().getIcon().create();
+            return new ItemStack(Items.PAPER);
+        }
+        if ("advancement_total".equals(entry.statType)) {
+            if (entry.targetId == null || entry.targetId.isEmpty())
+                return new ItemStack(Items.NETHER_STAR);
+            ItemStack root = Advancements.namespaceRootIcon(Minecraft.getInstance(), entry.targetId);
+            return root.isEmpty() ? new ItemStack(Items.NETHER_STAR) : root;
+        }
         if ("entity_killed".equals(entry.statType) || "entity_killed_by".equals(entry.statType))
             return resolveSpawnEgg(entry.targetId);
         if ("custom".equals(entry.statType)) return new ItemStack(Items.PAPER);
@@ -287,6 +358,7 @@ public class StatSidebar {
         if (mc.player == null) return;
 
         NixStatsConfig cfg = NixStatsConfig.get();
+        if (cfg.hudHidden) return;
         if (cfg.stats == null || cfg.stats.isEmpty()) return;
 
         float scale = cfg.scale;

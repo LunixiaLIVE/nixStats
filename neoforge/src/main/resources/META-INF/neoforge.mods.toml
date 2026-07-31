@@ -2,6 +2,9 @@ modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
 
+[[mixins]]
+    config = "nixstats-common.mixins.json"
+
 [[mods]]
     modId = "nixstats"
     version = "${version}"

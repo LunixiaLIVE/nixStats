@@ -40,6 +40,7 @@ public class NixStatsNeoForge {
         KeyMapping key = NixStatsClient.createConfigKey();
         event.registerCategory(NixStatsClient.getConfigCategory());
         event.register(key);
+        event.register(NixStatsClient.createToggleKey());
     }
 
     private void onClientTick(ClientTickEvent.Post event) {

@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.lunix.nixstats.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientAdvancementsAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

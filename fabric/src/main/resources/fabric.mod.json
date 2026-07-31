@@ -11,6 +11,9 @@
   },
   "license": "MIT",
   "environment": "client",
+  "mixins": [
+    "nixstats-common.mixins.json"
+  ],
   "entrypoints": {
     "client": ["net.lunix.nixstats.fabric.NixStatsFabric"]
   },
