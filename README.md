@@ -33,14 +33,24 @@
 - **A live phantom timer with color states.** Counts down the time until phantoms can spawn and shifts
   color from **rested → warning → critical** as the clock runs out, so a glance tells you whether it's time
   to sleep.
+- **Advancement tracking** *(26.x)*. A **grand total** across every namespace, **per-namespace
+  totals**, or **individual advancements** with live `X/Y` criteria progress and a ✓ when complete.
+  Datapack and modded advancements are picked up automatically and grouped by namespace.
 - **Add stats from a visual picker.** Browse categories with a searchable **item grid** (with tooltips) or
   a scrollable list for the General stats — click an item or entry to add it. No IDs to memorize.
 - **Full in-game configuration.** Title, HUD scale, text scale, column padding, sync interval, the three
   phantom colors (12-swatch palette + custom), the warning/critical thresholds, and the stat list —
   reorder, remove, add — all with a **live preview** beside the panel.
+- **Hide names for a narrower HUD.** Drop the block/item/mob name from each row and keep just the
+  action — *Mined*, *Killed*, *Picked Up*. The icon still identifies the row and the sidebar shrinks to
+  fit. Display only: nothing about what you track changes, and switching it back restores the names.
+- **Adjustable HUD opacity** *(26.x)*. Fade the background and frame from `0%`–`100%`; text and icons
+  stay fully opaque so the numbers never get harder to read.
+- **Show / Hide the whole HUD** *(26.x)*. A second rebindable keybind toggles the sidebar off and on,
+  and the choice persists between sessions.
 - **Drag-to-place positioning.** A dedicated "Set Position" mode where you drag the frame anywhere on
   screen; one click resets it to the default top-right corner.
-- **Open it your way.** A rebindable keybind *(unbound by default)* **or** the `/nixstats config` command.
+- **Open it your way.** A rebindable keybind *(unbound by default)* **or** the `/nixstats` command.
 - **Multiplayer-aware.** Periodically refreshes your stats from the server so counts stay live on servers,
   and reads straight from the integrated server in single-player for tick-accurate values.
 - **Fully client-side.** Install it on your client and it works on any server — vanilla or modded. Modded
@@ -74,7 +84,7 @@ configurable interval) so the numbers keep updating while you play.
 
 ## 🎛️ Configuration
 
-Open the config screen with the **keybind** or **`/nixstats config`** (see [Controls](#️-controls)).
+Open the config screen with the **keybind** or **`/nixstats`** (see [Controls](#️-controls)).
 Everything below is edited there — the panel **scales to fit** even at high GUI-scale settings, and a
 **live preview** of the sidebar sits beside the controls so you see every change instantly. Nothing is
 applied until you hit **Save**.
@@ -89,6 +99,10 @@ applied until you hit **Save**.
 - **Phantom Colors** — pick the *Rested*, *Warning*, and *Critical* colors from a 12-swatch palette (a
   custom value from the file is shown as an extra swatch).
 - **Warning / Critical** — the `%`-of-time-remaining thresholds where the phantom timer changes color.
+- **Opacity** *(26.x)* — HUD background and frame opacity, `0%`–`100%` (text and icons stay opaque).
+- **Names** — show or hide the block/item/mob name in each HUD row. With it off a row keeps only its
+  action and the sidebar narrows; General stats, advancements and the phantom timer always keep their
+  full label, since their icon alone wouldn't identify them.
 - **Stats** — a scrollable list; use **↑ / ↓** to reorder, **×** to remove, and **+ Add Stat** to open the
   picker.
 - **Set Position** — enter drag mode to place the frame; **Reset Position** returns it to the top-right.
@@ -135,19 +149,23 @@ it — the in-game screen covers everything — but here are the keys and defaul
 | `thresholdWarning` | `0.5` | Fraction of time left to stay *rested* (0–1). |
 | `thresholdCritical` | `0.2` | Fraction of time left before *critical* (0–1). |
 | `syncInterval` | `5` | Seconds between server stat refreshes. |
+| `hudOpacity` | `1.0` | Background/frame opacity, `0.1`–`1.0` *(26.x)*. |
+| `hudHidden` | `false` | Whether the HUD is toggled off *(26.x)*. |
+| `hideStatNames` | `false` | Hide block/item/mob names in HUD rows, leaving only the action. |
 | `stats` | *(Phantom)* | Ordered list of tracked stats; each has `statType`, `targetId`, and `label`. |
 
 > [!TIP]
 > A `stats` entry is just `{ "statType": "...", "targetId": "...", "label": "..." }`. `statType` is one of
 > `phantom`, `block_mined`, `item_used`, `item_crafted`, `item_broken`, `item_picked_up`, `item_dropped`,
-> `entity_killed`, `entity_killed_by`, or `custom`; `targetId` is the registry ID it points at (`null` for
+> `entity_killed`, `entity_killed_by`, `custom`, `advancement`, or `advancement_total`; `targetId` is the registry ID it points at (`null` for
 > the phantom timer). The picker fills all of this in for you.
 
 ## ⌨️ Controls
 
 | Action | How |
 |:--|:--|
-| **Open the config screen** | The **nixStats config** keybind *(unbound by default — set it under Controls → nixStats)* or the **`/nixstats config`** command. |
+| **Open the config screen** | The **nixStats config** keybind *(unbound by default — set it under Controls → nixStats)* or the **`/nixstats`** command. |
+| **Show / hide the HUD** | The **Show / Hide nixStats HUD** keybind *(unbound by default)*. |
 | **Reorder / remove a stat** | The **↑ / ↓ / ×** buttons on each row in the config screen. |
 | **Move the HUD** | **Set Position** → drag the frame; **Reset Position** to restore the default corner. |
 
