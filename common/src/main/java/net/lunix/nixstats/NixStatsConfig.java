@@ -56,6 +56,11 @@ public class NixStatsConfig {
     // Whether the HUD is hidden (toggled by the show/hide keybind)
     public boolean hudHidden = false;
 
+    // Drop the block/item/mob name from HUD rows, leaving only the action ("Mined",
+    // "Killed", ...) - the row icon still identifies the subject, and the frame narrows
+    // to suit. Display only: tracked stats and their stored labels are untouched.
+    public boolean hideStatNames = false;
+
     // Tracked stats displayed in the sidebar (in order)
     public List<StatEntry> stats = new ArrayList<>();
 

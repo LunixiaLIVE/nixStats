@@ -39,6 +39,7 @@ public class NixStatsConfigScreen extends Screen {
     private static float   tempThresholdWarning;
     private static float   tempThresholdCritical;
     private static float   tempHudOpacity;
+    private static boolean tempHideStatNames;
     private static List<StatEntry> tempStats;
     private static int     swatchSelRested;
     private static int     swatchSelWarning;
@@ -91,6 +92,7 @@ public class NixStatsConfigScreen extends Screen {
             tempThresholdWarning  = cfg.thresholdWarning;
             tempThresholdCritical = cfg.thresholdCritical;
             tempHudOpacity        = clampF(cfg.hudOpacity, 0f, 1f);
+            tempHideStatNames     = cfg.hideStatNames;
             tempStats             = deepCopy(cfg.stats);
             swatchSelRested       = findSwatch(tempColorRested);
             swatchSelWarning      = findSwatch(tempColorWarning);
@@ -123,7 +125,9 @@ public class NixStatsConfigScreen extends Screen {
         colorHeaderY     = y; y += 14;
         colorRowsBaseY   = y; y += 18;
         botSpinnersY     = y; y += 26;
+        y += 10;                      // blank line above the Names toggle
         statsHeaderY     = y; y += 14;
+        y += 10;                      // blank line below it, before the stats list
         statsListBaseY   = y;
 
         // Stats scroll area fills remaining space above the bottom buttons.
@@ -155,6 +159,14 @@ public class NixStatsConfigScreen extends Screen {
 
         // Scale/Text/Pad/Sync (top) and Warning/Critical (threshold) render as custom
         // up/down spinners â€” see drawSpinnerRow() / spinnerRowClick().
+
+        // Names on/off - left-aligned, with a blank line above for breathing room.
+        // Affects the HUD (and the live preview) only; the list below always shows full
+        // labels so rows stay tellable apart while configuring.
+        addRenderableWidget(Button.builder(namesButtonLabel(), b -> {
+            tempHideStatNames = !tempHideStatNames;
+            b.setMessage(namesButtonLabel());
+        }).bounds(innerX, statsHeaderY - 1, 76, 14).build());
 
         // + Add Stat (below scroll area, above bottom buttons)
         addRenderableWidget(Button.builder(Component.literal("+ Add Stat"), btn ->
@@ -516,7 +528,12 @@ public class NixStatsConfigScreen extends Screen {
         cfg.thresholdWarning   = tempThresholdWarning;
         cfg.thresholdCritical  = tempThresholdCritical;
         cfg.hudOpacity         = tempHudOpacity;
+        cfg.hideStatNames      = tempHideStatNames;
         cfg.stats              = deepCopy(tempStats);
+    }
+
+    private static Component namesButtonLabel() {
+        return Component.literal(tempHideStatNames ? "Names: Off" : "Names: On");
     }
 
     private NixStatsConfig buildTempConfig() {
@@ -532,6 +549,7 @@ public class NixStatsConfigScreen extends Screen {
         tmp.thresholdWarning  = tempThresholdWarning;
         tmp.thresholdCritical = tempThresholdCritical;
         tmp.hudOpacity        = tempHudOpacity;
+        tmp.hideStatNames     = tempHideStatNames;
         tmp.stats             = deepCopy(tempStats);
         return tmp;
     }

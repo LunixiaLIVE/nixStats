@@ -39,7 +39,8 @@ public class StatSidebar {
         int maxValuePx = 0;
         if (cfg.stats != null) {
             for (StatEntry entry : cfg.stats) {
-                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(entry.label) + cfg.colPad) * trs));
+                String lbl = StatEntry.displayLabel(entry, cfg.hideStatNames);
+                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(lbl) + cfg.colPad) * trs));
                 int raw = readStatValue(entry, mc);
                 maxValuePx = Math.max(maxValuePx, Math.round((font.width(formatValue(entry, raw)) + cfg.colPad) * trs));
             }
@@ -92,7 +93,7 @@ public class StatSidebar {
                 rawValues[i] = readStatValue(e, mc);
                 valStrs[i]   = formatValue(e, rawValues[i]);
                 valColors[i] = getValueColor(e, rawValues[i], cfg);
-                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(e.label) + cfg.colPad) * trs));
+                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(StatEntry.displayLabel(e, cfg.hideStatNames)) + cfg.colPad) * trs));
                 maxValuePx = Math.max(maxValuePx, Math.round((font.width(valStrs[i]) + cfg.colPad) * trs));
             }
         }
@@ -146,7 +147,7 @@ public class StatSidebar {
             float textY = rowY + (rh - 8f * trs) / 2f;
 
             // Label (col1 â€” truncation is safety only)
-            String labelStr = truncate(font, entry.label, maxLabelPx, trs);
+            String labelStr = truncate(font, StatEntry.displayLabel(entry, cfg.hideStatNames), maxLabelPx, trs);
             renderScaledText(g, font, labelStr, textX, textY, trs, COL_LABEL);
 
             // Value (col2 â€” right-aligned)
