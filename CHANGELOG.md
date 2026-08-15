@@ -5,6 +5,20 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.4.1] — 2026-08-15
+
+A Names toggle that hides block/item/mob names to keep the HUD narrow.
+
+### Added
+- **Names toggle** — a `Names: On` / `Names: Off` button in the config screen hides the block/item/mob name on each HUD row, leaving only the action (*Mined*, *Used*, *Crafted*, *Broken*, *Picked Up*, *Dropped*, *Killed*, *Killed By*). The row's icon still identifies what is being counted, and the sidebar narrows to match. Stored as `hideStatNames` (default `false`) and reflected in the config screen's live preview.
+
+### Notes
+- Display only — nothing about what is tracked, read, or saved changes, and switching the toggle back restores the full names.
+- Rows whose icon cannot identify them on its own always keep their full label: General stats (they share one generic icon), advancements, and the phantom timer. Those can still set the sidebar's width.
+
+### Requirements
+- **Java 25**, Minecraft 26.1.x. Client-side; Fabric also needs Fabric API.
+
 ## [1.3.1] — 2026-07-31
 
 Advancement tracking, HUD show/hide, and opacity.
