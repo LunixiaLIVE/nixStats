@@ -176,7 +176,7 @@ it — the in-game screen covers everything — but here are the keys and defaul
 | `stats` | *(Phantom)* | Ordered list of tracked stats; each has `statType`, `targetId`, and `label`. |
 
 > [!NOTE]
-> **Updating from 1.4.1 or earlier?** The file migrates itself the first time 1.4.3 loads. The old
+> **Updating from 1.4.1 or earlier?** The file migrates itself the first time 1.4.2 loads. The old
 > `colPad` seeds both `labelPad` and `valuePad`, so your HUD keeps exactly the width it had, and
 > `hideStatNames` becomes `statNameMode` (`true` → `ABBREV`, `false` → `NAMES`). Both old keys are
 > dropped from the file on the next save.
