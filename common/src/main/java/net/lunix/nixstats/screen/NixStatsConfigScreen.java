@@ -36,6 +36,7 @@ public class NixStatsConfigScreen extends Screen {
     private static int     tempLabelPad;
     private static int     tempValuePad;
     private static int     tempEmptyLabelWidth;
+    private static boolean tempAbbreviateValues;
     private static int     tempSyncInterval;
     private static int     tempColorRested;
     private static int     tempColorWarning;
@@ -92,6 +93,7 @@ public class NixStatsConfigScreen extends Screen {
             tempLabelPad          = Math.max(0, Math.min(20, cfg.labelPad));
             tempValuePad          = Math.max(0, Math.min(20, cfg.valuePad));
             tempEmptyLabelWidth   = Math.max(0, Math.min(20, cfg.emptyLabelWidth));
+            tempAbbreviateValues  = cfg.abbreviateValues;
             tempSyncInterval      = Math.max(1, Math.min(60, cfg.syncInterval));
             tempColorRested       = cfg.colorRested;
             tempColorWarning      = cfg.colorWarning;
@@ -175,6 +177,13 @@ public class NixStatsConfigScreen extends Screen {
             tempStatNameMode = tempStatNameMode.next();
             b.setMessage(namesButtonLabel());
         }).bounds(innerX, statsHeaderY - 1, 84, 14).build());
+
+        // Value format - right-aligned on the same row, so it clears the centred
+        // "- Stats -" header sitting between the two buttons.
+        addRenderableWidget(Button.builder(valuesButtonLabel(), b -> {
+            tempAbbreviateValues = !tempAbbreviateValues;
+            b.setMessage(valuesButtonLabel());
+        }).bounds(innerX + innerW - 84, statsHeaderY - 1, 84, 14).build());
 
         // + Add Stat (below scroll area, above bottom buttons)
         addRenderableWidget(Button.builder(Component.literal("+ Add Stat"), btn ->
@@ -538,6 +547,7 @@ public class NixStatsConfigScreen extends Screen {
         cfg.labelPad           = tempLabelPad;
         cfg.valuePad           = tempValuePad;
         cfg.emptyLabelWidth    = tempEmptyLabelWidth;
+        cfg.abbreviateValues   = tempAbbreviateValues;
         cfg.syncInterval       = tempSyncInterval;
         cfg.colorRested        = tempColorRested;
         cfg.colorWarning       = tempColorWarning;
@@ -547,6 +557,10 @@ public class NixStatsConfigScreen extends Screen {
         cfg.hudOpacity         = tempHudOpacity;
         cfg.statNameMode       = tempStatNameMode;
         cfg.stats              = deepCopy(tempStats);
+    }
+
+    private static Component valuesButtonLabel() {
+        return Component.literal(tempAbbreviateValues ? "Values: Short" : "Values: Full");
     }
 
     private static Component namesButtonLabel() {
@@ -562,6 +576,7 @@ public class NixStatsConfigScreen extends Screen {
         tmp.labelPad          = tempLabelPad;
         tmp.valuePad          = tempValuePad;
         tmp.emptyLabelWidth   = tempEmptyLabelWidth;
+        tmp.abbreviateValues  = tempAbbreviateValues;
         tmp.syncInterval      = tempSyncInterval;
         tmp.colorRested       = tempColorRested;
         tmp.colorWarning      = tempColorWarning;

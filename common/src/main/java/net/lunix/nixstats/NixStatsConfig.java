@@ -48,6 +48,11 @@ public class NixStatsConfig {
     // this is ignored.
     public int emptyLabelWidth = 0;
 
+    // Shorten large plain counts to 1.5K / 2.3M / 1.1B so the value column stays narrow.
+    // Only applies where the displayed number *is* the raw count — distances, times, the
+    // phantom clock, advancement progress and tenths-formatted damage keep their own format.
+    public boolean abbreviateValues = false;
+
     // Pre-1.4.2's single knob, which padded the label and value columns together. Kept
     // only to seed the three above on first load; boxed so Gson leaves it null when
     // absent, and nulled after migrating so it drops out of the file on the next save.
