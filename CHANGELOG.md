@@ -7,12 +7,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per 
 
 ## [1.4.3] — 2026-08-16
 
-Three-state name display, and per-column width controls.
+Three-state name display, per-column width controls, and abbreviated values.
 
 ### Added
 - **Show Names / Show Abbrev / Show None** — the config screen's name button now cycles three states instead of two, and its caption always reads the mode in effect. **Show Names** draws the full label (*Stone Mined*), **Show Abbrev** keeps only the action (*Mined*), and **Show None** drops the label entirely so a row is just its icon and its number. Under Show None the same block listed under several categories is indistinguishable — that ambiguity is intended, and the icon plus the count is the point.
 - **Per-column width controls** — the single `Pad` spinner became three, and the icon gap became adjustable: **IGap** (icon → label), **LPad** (label column) and **VPad** (value column), each `0`–`20`. Columns still auto-fit their content; these tune the breathing room around it.
 - **ECol** — the width the middle column takes when *no* row populates it, `0`–`20`, default `0`. With every row shedding its name under Show None, the column now collapses completely and the icons sit against the numbers. As soon as one row keeps a label — a Phantom or advancement row — the column auto-fits that instead and ECol is ignored.
+
+- **Abbreviate values** — a `Values: Full` / `Values: Short` toggle beside the name button shortens large counts to `1.5K` / `2.3M` / `1.1B`, and the value column narrows to match. Off by default. It only applies where the number shown *is* the raw count: distances, times, the phantom clock, advancement progress and tenths-formatted damage stats all keep the format Minecraft gave them. Counts truncate rather than round, so a counter never reads higher than it is — 999,999 shows as `999.9K`, not `1M`.
 
 ### Changed
 - The sidebar's minimum width is now sized to its **title bar** rather than a flat 80px. The old floor was wider than a fully collapsed HUD, so an emptied label column made no visible difference. A HUD whose content computes narrower than 80px will now render narrower than it did before; the title can still never clip.

@@ -66,7 +66,7 @@ public class StatSidebar {
                 String lbl = StatEntry.displayLabel(entry, cfg.statNameMode);
                 maxLabelPx = Math.max(maxLabelPx, labelColPx(font, lbl, cfg, trs));
                 int raw = readStatValue(entry, mc);
-                maxValuePx = Math.max(maxValuePx, Math.round((font.width(formatValue(entry, raw)) + cfg.valuePad) * trs));
+                maxValuePx = Math.max(maxValuePx, Math.round((font.width(displayValue(entry, raw, cfg.abbreviateValues)) + cfg.valuePad) * trs));
             }
         }
         int col1Px = padLPx + iconSlotPx + iconGapPx + labelColTotalPx(cfg, maxLabelPx, scale);
@@ -114,7 +114,7 @@ public class StatSidebar {
             for (int i = 0; i < stats.size(); i++) {
                 StatEntry e = stats.get(i);
                 rawValues[i] = readStatValue(e, mc);
-                valStrs[i]   = formatValue(e, rawValues[i]);
+                valStrs[i]   = displayValue(e, rawValues[i], cfg.abbreviateValues);
                 valColors[i] = getValueColor(e, rawValues[i], cfg);
                 maxLabelPx = Math.max(maxLabelPx, labelColPx(font, StatEntry.displayLabel(e, cfg.statNameMode), cfg, trs));
                 maxValuePx = Math.max(maxValuePx, Math.round((font.width(valStrs[i]) + cfg.valuePad) * trs));
@@ -312,6 +312,51 @@ public class StatSidebar {
         // distance, time and damage all render exactly like the vanilla stats screen.
         Stat<?> stat = resolveStat(entry);
         return stat != null ? stat.format(raw) : String.valueOf(raw);
+    }
+
+    /**
+     * Value as it should appear in the HUD — {@link #formatValue}, optionally shortened.
+     *
+     * <p>Abbreviation only ever applies where the displayed number *is* the raw count, so
+     * distances ({@code 1.23 km}), times, the phantom clock, advancement progress and
+     * tenths-formatted damage all keep the format Minecraft gave them. See
+     * {@link #isPlainCount}.
+     */
+    public static String displayValue(StatEntry entry, int raw, boolean abbreviate) {
+        String formatted = formatValue(entry, raw);
+        if (!abbreviate || !isPlainCount(formatted, raw)) return formatted;
+        return abbreviateCount(raw);
+    }
+
+    /**
+     * Whether {@code formatted} is just {@code raw} with grouping separators — the only
+     * case where shortening the raw int is truthful.
+     *
+     * <p>The '.' test is what keeps damage stats honest: those use Minecraft's
+     * divide-by-ten formatter, so a raw 12345 displays as {@code 1,234.5}. Its digits
+     * match the raw value, but abbreviating the raw int would print {@code 12.3K} for a
+     * number that actually reads 1,234.5.
+     */
+    private static boolean isPlainCount(String formatted, int raw) {
+        if (formatted.indexOf('.') >= 0) return false;
+        return formatted.replaceAll("[^0-9]", "").equals(Integer.toString(raw));
+    }
+
+    /**
+     * 1,500 → {@code 1.5K}, 2,300,000 → {@code 2.3M}. Truncates rather than rounds, so a
+     * counter never reads higher than the number actually is — 999,999 shows {@code 999.9K},
+     * not {@code 1M}. Locale-independent so the decimal never becomes a comma.
+     */
+    private static String abbreviateCount(int raw) {
+        if (raw < 1_000)         return Integer.toString(raw);
+        if (raw < 1_000_000)     return trimTenths(raw / 1_000d)     + "K";
+        if (raw < 1_000_000_000) return trimTenths(raw / 1_000_000d) + "M";
+        return trimTenths(raw / 1_000_000_000d) + "B";
+    }
+
+    private static String trimTenths(double v) {
+        String s = String.format(java.util.Locale.ROOT, "%.1f", Math.floor(v * 10) / 10);
+        return s.endsWith(".0") ? s.substring(0, s.length() - 2) : s;
     }
 
     /** Resolve the underlying Minecraft {@link Stat} for a tracked entry (null if unresolvable). */
