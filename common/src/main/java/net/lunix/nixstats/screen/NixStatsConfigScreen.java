@@ -2,6 +2,7 @@ package net.lunix.nixstats.screen;
 
 import net.lunix.nixstats.NixStatsConfig;
 import net.lunix.nixstats.StatEntry;
+import net.lunix.nixstats.StatNameMode;
 import net.lunix.nixstats.StatSidebar;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -31,7 +32,10 @@ public class NixStatsConfigScreen extends Screen {
     private static String  tempTitle;
     private static float   tempScale;
     private static float   tempTextScale;
-    private static int     tempColPad;
+    private static int     tempIconGap;
+    private static int     tempLabelPad;
+    private static int     tempValuePad;
+    private static int     tempEmptyLabelWidth;
     private static int     tempSyncInterval;
     private static int     tempColorRested;
     private static int     tempColorWarning;
@@ -39,7 +43,7 @@ public class NixStatsConfigScreen extends Screen {
     private static float   tempThresholdWarning;
     private static float   tempThresholdCritical;
     private static float   tempHudOpacity;
-    private static boolean tempHideStatNames;
+    private static StatNameMode tempStatNameMode = StatNameMode.NAMES;
     private static List<StatEntry> tempStats;
     private static int     swatchSelRested;
     private static int     swatchSelWarning;
@@ -84,7 +88,10 @@ public class NixStatsConfigScreen extends Screen {
             tempTitle             = cfg.sidebarTitle != null ? cfg.sidebarTitle : "nixStats";
             tempScale             = cfg.scale;
             tempTextScale         = cfg.textScale > 0 ? cfg.textScale : 1.0f;
-            tempColPad            = Math.max(0, Math.min(20, cfg.colPad));
+            tempIconGap           = Math.max(0, Math.min(20, cfg.iconGap));
+            tempLabelPad          = Math.max(0, Math.min(20, cfg.labelPad));
+            tempValuePad          = Math.max(0, Math.min(20, cfg.valuePad));
+            tempEmptyLabelWidth   = Math.max(0, Math.min(20, cfg.emptyLabelWidth));
             tempSyncInterval      = Math.max(1, Math.min(60, cfg.syncInterval));
             tempColorRested       = cfg.colorRested;
             tempColorWarning      = cfg.colorWarning;
@@ -92,7 +99,7 @@ public class NixStatsConfigScreen extends Screen {
             tempThresholdWarning  = cfg.thresholdWarning;
             tempThresholdCritical = cfg.thresholdCritical;
             tempHudOpacity        = clampF(cfg.hudOpacity, 0f, 1f);
-            tempHideStatNames     = cfg.hideStatNames;
+            tempStatNameMode      = cfg.statNameMode != null ? cfg.statNameMode : StatNameMode.NAMES;
             tempStats             = deepCopy(cfg.stats);
             swatchSelRested       = findSwatch(tempColorRested);
             swatchSelWarning      = findSwatch(tempColorWarning);
@@ -160,13 +167,14 @@ public class NixStatsConfigScreen extends Screen {
         // Scale/Text/Pad/Sync (top) and Warning/Critical (threshold) render as custom
         // up/down spinners — see drawSpinnerRow() / spinnerRowClick().
 
-        // Names on/off - left-aligned, with a blank line above for breathing room.
+        // Name mode - left-aligned, with a blank line above for breathing room. Cycles
+        // Names -> Abbrev -> None, and the caption is always the mode now in effect.
         // Affects the HUD (and the live preview) only; the list below always shows full
         // labels so rows stay tellable apart while configuring.
         addRenderableWidget(Button.builder(namesButtonLabel(), b -> {
-            tempHideStatNames = !tempHideStatNames;
+            tempStatNameMode = tempStatNameMode.next();
             b.setMessage(namesButtonLabel());
-        }).bounds(innerX, statsHeaderY - 1, 76, 14).build());
+        }).bounds(innerX, statsHeaderY - 1, 84, 14).build());
 
         // + Add Stat (below scroll area, above bottom buttons)
         addRenderableWidget(Button.builder(Component.literal("+ Add Stat"), btn ->
@@ -214,8 +222,8 @@ public class NixStatsConfigScreen extends Screen {
         g.fill(panelX - 1, boxTop - 1, panelX + panelW + 1, boxBottom + 1, 0xFF555555);
         g.fill(panelX,     boxTop,     panelX + panelW,     boxBottom,     0xFF1E1E1E);
 
-        // Top settings row — Scale / Text / Pad / Sync up-down spinners
-        drawSpinnerRow(g, 0, 4, topSpinnersY, vMouseX, vMouseY);
+        // Top settings row — the six sizing spinners (Scale / Text / IGap / LPad / VPad / ECol)
+        drawSpinnerRow(g, 0, 6, topSpinnersY, vMouseX, vMouseY);
 
         // Phantom colors section header
         g.centeredText(font, Component.literal("─ Phantom Colors ─"),
@@ -232,8 +240,8 @@ public class NixStatsConfigScreen extends Screen {
             g.fill(swX, swY, swX + 12, swY + 12, rowColors[row]);
         }
 
-        // Threshold row — Warning / Critical / Opacity up-down spinners
-        drawSpinnerRow(g, 4, 3, botSpinnersY, vMouseX, vMouseY);
+        // Bottom row — Sync / Warning / Critical / Opacity up-down spinners
+        drawSpinnerRow(g, 6, 4, botSpinnersY, vMouseX, vMouseY);
 
         // Stats section header
         g.centeredText(font, Component.literal("─ Stats ─"),
@@ -350,8 +358,8 @@ public class NixStatsConfigScreen extends Screen {
 
         // Up/down spinners (top settings row + threshold row)
         if (!consumed && event.button() == 0) {
-            if (spinnerRowClick(mouseX, mouseY, 0, 4, topSpinnersY)) return true;
-            if (spinnerRowClick(mouseX, mouseY, 4, 3, botSpinnersY)) return true;
+            if (spinnerRowClick(mouseX, mouseY, 0, 6, topSpinnersY)) return true;
+            if (spinnerRowClick(mouseX, mouseY, 6, 4, botSpinnersY)) return true;
         }
 
         if (!consumed && event.button() == 0) {
@@ -440,7 +448,7 @@ public class NixStatsConfigScreen extends Screen {
         }
     }
 
-    private static final String[] SPIN_LABELS = { "Scale", "Text", "Pad", "Sync", "Warn", "Crit", "Opac" };
+    private static final String[] SPIN_LABELS = { "Scale", "Text", "IGap", "LPad", "VPad", "ECol", "Sync", "Warn", "Crit", "Opac" };
 
     /** Draw a row of n up/down spinners starting at spinner id {@code startId}. */
     private void drawSpinnerRow(GuiGraphicsExtractor g, int startId, int n, int rowY, int vmx, int vmy) {
@@ -478,10 +486,13 @@ public class NixStatsConfigScreen extends Screen {
         return switch (id) {
             case 0 -> String.format("%.1fx", tempScale);
             case 1 -> String.format("%.1fx", tempTextScale);
-            case 2 -> String.valueOf(tempColPad);
-            case 3 -> tempSyncInterval + "s";
-            case 4 -> Math.round(tempThresholdWarning * 100) + "%";
-            case 5 -> Math.round(tempThresholdCritical * 100) + "%";
+            case 2 -> String.valueOf(tempIconGap);
+            case 3 -> String.valueOf(tempLabelPad);
+            case 4 -> String.valueOf(tempValuePad);
+            case 5 -> String.valueOf(tempEmptyLabelWidth);
+            case 6 -> tempSyncInterval + "s";
+            case 7 -> Math.round(tempThresholdWarning * 100) + "%";
+            case 8 -> Math.round(tempThresholdCritical * 100) + "%";
             default -> Math.round(tempHudOpacity * 100) + "%";
         };
     }
@@ -490,11 +501,14 @@ public class NixStatsConfigScreen extends Screen {
         switch (id) {
             case 0 -> tempScale        = clampF(Math.round((tempScale + dir * 0.1f) * 10) / 10f, 0.1f, 3.0f);
             case 1 -> tempTextScale    = clampF(Math.round((tempTextScale + dir * 0.1f) * 10) / 10f, 0.5f, 2.0f);
-            case 2 -> tempColPad       = (int) clampF(tempColPad + dir, 0, 20);
-            case 3 -> tempSyncInterval = (int) clampF(tempSyncInterval + dir, 1, 60);
-            case 4 -> tempThresholdWarning  = clampF(Math.round((tempThresholdWarning + dir * 0.05f) * 20) / 20f, 0f, 1f);
-            case 5 -> tempThresholdCritical = clampF(Math.round((tempThresholdCritical + dir * 0.05f) * 20) / 20f, 0f, 1f);
-            case 6 -> tempHudOpacity        = clampF(Math.round((tempHudOpacity + dir * 0.05f) * 20) / 20f, 0f, 1f);
+            case 2 -> tempIconGap         = (int) clampF(tempIconGap  + dir, 0, 20);
+            case 3 -> tempLabelPad        = (int) clampF(tempLabelPad + dir, 0, 20);
+            case 4 -> tempValuePad        = (int) clampF(tempValuePad + dir, 0, 20);
+            case 5 -> tempEmptyLabelWidth = (int) clampF(tempEmptyLabelWidth + dir, 0, 20);
+            case 6 -> tempSyncInterval    = (int) clampF(tempSyncInterval + dir, 1, 60);
+            case 7 -> tempThresholdWarning  = clampF(Math.round((tempThresholdWarning + dir * 0.05f) * 20) / 20f, 0f, 1f);
+            case 8 -> tempThresholdCritical = clampF(Math.round((tempThresholdCritical + dir * 0.05f) * 20) / 20f, 0f, 1f);
+            case 9 -> tempHudOpacity        = clampF(Math.round((tempHudOpacity + dir * 0.05f) * 20) / 20f, 0f, 1f);
         }
     }
 
@@ -520,7 +534,10 @@ public class NixStatsConfigScreen extends Screen {
         cfg.sidebarTitle       = tempTitle != null ? tempTitle : "nixStats";
         cfg.scale              = tempScale;
         cfg.textScale          = tempTextScale;
-        cfg.colPad             = tempColPad;
+        cfg.iconGap            = tempIconGap;
+        cfg.labelPad           = tempLabelPad;
+        cfg.valuePad           = tempValuePad;
+        cfg.emptyLabelWidth    = tempEmptyLabelWidth;
         cfg.syncInterval       = tempSyncInterval;
         cfg.colorRested        = tempColorRested;
         cfg.colorWarning       = tempColorWarning;
@@ -528,12 +545,12 @@ public class NixStatsConfigScreen extends Screen {
         cfg.thresholdWarning   = tempThresholdWarning;
         cfg.thresholdCritical  = tempThresholdCritical;
         cfg.hudOpacity         = tempHudOpacity;
-        cfg.hideStatNames      = tempHideStatNames;
+        cfg.statNameMode       = tempStatNameMode;
         cfg.stats              = deepCopy(tempStats);
     }
 
     private static Component namesButtonLabel() {
-        return Component.literal(tempHideStatNames ? "Names: Off" : "Names: On");
+        return Component.literal(tempStatNameMode.caption());
     }
 
     private NixStatsConfig buildTempConfig() {
@@ -541,7 +558,10 @@ public class NixStatsConfigScreen extends Screen {
         tmp.sidebarTitle      = tempTitle != null ? tempTitle : "nixStats";
         tmp.scale             = tempScale;
         tmp.textScale         = tempTextScale;
-        tmp.colPad            = tempColPad;
+        tmp.iconGap           = tempIconGap;
+        tmp.labelPad          = tempLabelPad;
+        tmp.valuePad          = tempValuePad;
+        tmp.emptyLabelWidth   = tempEmptyLabelWidth;
         tmp.syncInterval      = tempSyncInterval;
         tmp.colorRested       = tempColorRested;
         tmp.colorWarning      = tempColorWarning;
@@ -549,7 +569,7 @@ public class NixStatsConfigScreen extends Screen {
         tmp.thresholdWarning  = tempThresholdWarning;
         tmp.thresholdCritical = tempThresholdCritical;
         tmp.hudOpacity        = tempHudOpacity;
-        tmp.hideStatNames     = tempHideStatNames;
+        tmp.statNameMode      = tempStatNameMode;
         tmp.stats             = deepCopy(tempStats);
         return tmp;
     }

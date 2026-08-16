@@ -26,28 +26,52 @@ public class StatSidebar {
     private static final int ROW_H     = 16;
     private static final int PAD_L     = 3;
     private static final int ICON_SLOT = 12;   // icons scaled to 12×12
-    private static final int ICON_GAP  = 3;
+    // The icon→label gap is cfg.iconGap now; its old fixed value of 3 is the config default.
+
+    /**
+     * Total width the middle (label) column occupies, trailing gap included.
+     *
+     * <p>When no row populates it, the column collapses to {@code cfg.emptyLabelWidth}
+     * and the trailing gap is dropped entirely — otherwise a 4px gutter would survive
+     * even at width 0 and the column could never truly disappear.
+     */
+    private static int labelColTotalPx(NixStatsConfig cfg, int maxLabelPx, float scale) {
+        if (maxLabelPx <= 0) return Math.round(cfg.emptyLabelWidth * scale);
+        return maxLabelPx + Math.round(4 * scale);
+    }
+
+    /**
+     * Narrowest the frame may be: enough to hold its own title bar.
+     *
+     * <p>This used to be a flat 80px, which was wider than a fully collapsed HUD — so an
+     * emptied label column made no visible difference. Sizing the floor to the title
+     * instead lets the frame shrink to whatever the content actually needs.
+     */
+    private static int minFrameWPx(NixStatsConfig cfg, Font font, float scale, float trs, int b) {
+        String title = cfg.sidebarTitle != null ? cfg.sidebarTitle : "nixStats";
+        return 2 * b + Math.round(font.width(title) * trs) + Math.round(8 * scale);
+    }
+
     public static int computeFrameWPx(NixStatsConfig cfg, Font font, Minecraft mc, float scale) {
         float trs      = scale * Math.max(0.1f, cfg.textScale);
         int b          = Math.max(1, Math.round(BORDER * scale));
         int padLPx     = Math.round(PAD_L * scale);
         int iconSlotPx = Math.round(ICON_SLOT * scale);
-        int iconGapPx  = Math.round(ICON_GAP * scale);
-        int colGapPx   = Math.round(4 * scale);
+        int iconGapPx  = Math.round(cfg.iconGap * scale);
         int rightPadPx = Math.round(4 * scale);
         int maxLabelPx = 0;
         int maxValuePx = 0;
         if (cfg.stats != null) {
             for (StatEntry entry : cfg.stats) {
-                String lbl = StatEntry.displayLabel(entry, cfg.hideStatNames);
-                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(lbl) + cfg.colPad) * trs));
+                String lbl = StatEntry.displayLabel(entry, cfg.statNameMode);
+                maxLabelPx = Math.max(maxLabelPx, labelColPx(font, lbl, cfg, trs));
                 int raw = readStatValue(entry, mc);
-                maxValuePx = Math.max(maxValuePx, Math.round((font.width(formatValue(entry, raw)) + cfg.colPad) * trs));
+                maxValuePx = Math.max(maxValuePx, Math.round((font.width(formatValue(entry, raw)) + cfg.valuePad) * trs));
             }
         }
-        int col1Px = padLPx + iconSlotPx + iconGapPx + maxLabelPx + colGapPx;
+        int col1Px = padLPx + iconSlotPx + iconGapPx + labelColTotalPx(cfg, maxLabelPx, scale);
         int col2Px = maxValuePx + rightPadPx;
-        return Math.max(Math.round(80 * scale), 2 * b + col1Px + col2Px);
+        return Math.max(minFrameWPx(cfg, font, scale, trs, b), 2 * b + col1Px + col2Px);
     }
 
     public static int frameH(NixStatsConfig cfg) {
@@ -72,8 +96,7 @@ public class StatSidebar {
         int rh         = Math.round(ROW_H * scale);
         int padLPx     = Math.round(PAD_L * scale);
         int iconSlotPx = Math.round(ICON_SLOT * scale);
-        int iconGapPx  = Math.round(ICON_GAP * scale);
-        int colGapPx   = Math.round(4 * scale);
+        int iconGapPx  = Math.round(cfg.iconGap * scale);
         int rightPadPx = Math.round(4 * scale);
         float iconScale = (ICON_SLOT / 16f) * scale;
 
@@ -93,14 +116,14 @@ public class StatSidebar {
                 rawValues[i] = readStatValue(e, mc);
                 valStrs[i]   = formatValue(e, rawValues[i]);
                 valColors[i] = getValueColor(e, rawValues[i], cfg);
-                maxLabelPx = Math.max(maxLabelPx, Math.round((font.width(StatEntry.displayLabel(e, cfg.hideStatNames)) + cfg.colPad) * trs));
-                maxValuePx = Math.max(maxValuePx, Math.round((font.width(valStrs[i]) + cfg.colPad) * trs));
+                maxLabelPx = Math.max(maxLabelPx, labelColPx(font, StatEntry.displayLabel(e, cfg.statNameMode), cfg, trs));
+                maxValuePx = Math.max(maxValuePx, Math.round((font.width(valStrs[i]) + cfg.valuePad) * trs));
             }
         }
 
-        int col1Px = padLPx + iconSlotPx + iconGapPx + maxLabelPx + colGapPx;
+        int col1Px = padLPx + iconSlotPx + iconGapPx + labelColTotalPx(cfg, maxLabelPx, scale);
         int col2Px = maxValuePx + rightPadPx;
-        int sw = Math.max(Math.round(80 * scale), 2 * b + col1Px + col2Px);
+        int sw = Math.max(minFrameWPx(cfg, font, scale, trs, b), 2 * b + col1Px + col2Px);
         int sh = Math.round(frameH(cfg) * scale);
 
         // Border + background
@@ -146,9 +169,10 @@ public class StatSidebar {
 
             float textY = rowY + (rh - 8f * trs) / 2f;
 
-            // Label (col1 — truncation is safety only)
-            String labelStr = truncate(font, StatEntry.displayLabel(entry, cfg.hideStatNames), maxLabelPx, trs);
-            renderScaledText(g, font, labelStr, textX, textY, trs, COL_LABEL);
+            // Label (col1 — truncation is safety only; blank under Show None)
+            String labelStr = truncate(font, StatEntry.displayLabel(entry, cfg.statNameMode), maxLabelPx, trs);
+            if (!labelStr.isEmpty())
+                renderScaledText(g, font, labelStr, textX, textY, trs, COL_LABEL);
 
             // Value (col2 — right-aligned)
             int valW  = Math.round(font.width(valStrs[i]) * trs);
@@ -163,6 +187,16 @@ public class StatSidebar {
         g.pose().scale(scale, scale);
         g.text(font, text, 0, 0, color);
         g.pose().popMatrix();
+    }
+
+    /**
+     * Width a label contributes to the label column. A blank label contributes nothing —
+     * without this, Show None would leave an empty labelPad-wide gutter propped open
+     * between the icons and the numbers.
+     */
+    private static int labelColPx(Font font, String label, NixStatsConfig cfg, float trs) {
+        if (label == null || label.isEmpty()) return 0;
+        return Math.round((font.width(label) + cfg.labelPad) * trs);
     }
 
     private static String truncate(Font font, String label, int maxPx, float scale) {
