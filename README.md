@@ -24,8 +24,7 @@
 ## ✨ Features
 
 - **A clean sidebar HUD** — a bordered, titled panel with a per-row **item icon**, a label, and a
-  right-aligned value. Rows alternate shading, columns auto-size to their content, and big numbers collapse
-  to `K` / `M` / `B` so the frame stays tidy.
+  right-aligned value. Rows alternate shading and columns auto-size to their content.
 - **Track almost any vanilla stat.** The built-in **phantom (insomnia) timer** plus every stat Minecraft
   keeps: blocks mined, items used / crafted / broken / picked up / dropped, mobs killed, deaths *by* a mob,
   and the whole **General** family — counts, distances (walked, sprinted, flown…), and time (play time,
@@ -41,9 +40,15 @@
 - **Full in-game configuration.** Title, HUD scale, text scale, column padding, sync interval, the three
   phantom colors (12-swatch palette + custom), the warning/critical thresholds, and the stat list —
   reorder, remove, add — all with a **live preview** beside the panel.
-- **Hide names for a narrower HUD.** Drop the block/item/mob name from each row and keep just the
-  action — *Mined*, *Killed*, *Picked Up*. The icon still identifies the row and the sidebar shrinks to
-  fit. Display only: nothing about what you track changes, and switching it back restores the names.
+- **Name display, three ways.** One button cycles **Show Names** (the full label, *Stone Mined*),
+  **Show Abbrev** (the action alone — *Mined*, *Killed*, *Picked Up*) and **Show None** (no label at all,
+  leaving just the icon and the number). The button's caption always reads the mode in effect, and the
+  sidebar narrows to match. Under **Show None** the same block tracked under several categories looks
+  identical — that ambiguity is intended. General stats, advancements and the phantom timer keep their
+  full label in every mode, since their icon alone wouldn't identify them.
+- **Per-column width controls.** Tune the icon→label gap, the label column and the value column
+  independently, plus the width the middle column takes when no row uses it — set that to `0` and a
+  name-less HUD collapses to icons hard against the numbers. Columns still auto-fit their content.
 - **Adjustable HUD opacity** *(26.x)*. Fade the background and frame from `0%`–`100%`; text and icons
   stay fully opaque so the numbers never get harder to read.
 - **Show / Hide the whole HUD** *(26.x)*. A second rebindable keybind toggles the sidebar off and on,
@@ -68,9 +73,11 @@ things:
   you can rename freely.
 - **A value** — read live from your player's statistics and formatted for the stat type.
 
-**Values are formatted to match the stat.** The phantom timer and playtime-style stats render as a clock
-(`MM:SS` for the timer, `H:MM:SS` for time stats); distances and counts render as plain numbers, with
-`1.5K` / `2.3M` / `1.1B` shortening once they get large.
+**Values are formatted to match the stat.** Every stat is rendered by Minecraft's own formatter, so counts,
+distances, time and damage all read exactly as they do on the vanilla Statistics screen — counts as grouped
+numbers (`1,234,567`), distances in km / m / cm, time as `d` / `h` / `m`. Advancements show their vanilla
+`X/Y` criteria progress (✓ when complete). The one exception is the phantom timer, which shows a live
+`MM:SS` countdown.
 
 **The phantom timer** starts full and counts **down** toward zero — zero is when phantoms may begin
 spawning after too long without sleep. Its color follows the fraction of time remaining: above the
@@ -94,15 +101,19 @@ applied until you hit **Save**.
 - **Sidebar Title** — type any title (up to 32 characters).
 - **Scale** — overall HUD size, `0.10x`–`3.00x`.
 - **Text** — text size relative to the HUD, `0.50x`–`2.00x`.
-- **Col Pad** — extra padding on each column, `0`–`20`.
+- **IGap / LPad / VPad** — breathing room on each column: the icon→label gap, the label column and the
+  value column, `0`–`20` each. The columns still auto-fit their content.
+- **ECol** — the width the middle column takes when *no* row populates it (every row under **Show
+  None**, say), `0`–`20`. At the default `0` that column disappears entirely. If even one row keeps a
+  label, the column auto-fits that instead and this is ignored.
 - **Sync** — how often stats refresh on servers, in seconds.
 - **Phantom Colors** — pick the *Rested*, *Warning*, and *Critical* colors from a 12-swatch palette (a
   custom value from the file is shown as an extra swatch).
 - **Warning / Critical** — the `%`-of-time-remaining thresholds where the phantom timer changes color.
 - **Opacity** *(26.x)* — HUD background and frame opacity, `0%`–`100%` (text and icons stay opaque).
-- **Names** — show or hide the block/item/mob name in each HUD row. With it off a row keeps only its
-  action and the sidebar narrows; General stats, advancements and the phantom timer always keep their
-  full label, since their icon alone wouldn't identify them.
+- **Names** — cycle **Show Names** → **Show Abbrev** → **Show None** for the label on each row. The
+  button's caption is always the mode in effect. General stats, advancements and the phantom timer keep
+  their full label in every mode, since their icon alone wouldn't identify them.
 - **Stats** — a scrollable list; use **↑ / ↓** to reorder, **×** to remove, and **+ Add Stat** to open the
   picker.
 - **Set Position** — enter drag mode to place the frame; **Reset Position** returns it to the top-right.
@@ -141,7 +152,10 @@ it — the in-game screen covers everything — but here are the keys and defaul
 | `posY` | `-1` | HUD Y in pixels; `-1` = auto (near top). |
 | `scale` | `1.0` | Overall HUD scale, `0.1`–`3.0`. |
 | `textScale` | `1.0` | Text scale relative to the HUD, `0.5`–`2.0`. |
-| `colPad` | `2` | Extra per-column padding, `0`–`20`. |
+| `iconGap` | `3` | Gap between the row icon and the label, `0`–`20`. |
+| `labelPad` | `2` | Padding on the label column, `0`–`20`. |
+| `valuePad` | `2` | Padding on the value column, `0`–`20`. |
+| `emptyLabelWidth` | `0` | Width of the label column when no row populates it, `0`–`20`. |
 | `sidebarTitle` | `"nixStats"` | Title text (≤ 32 chars). |
 | `colorRested` | `0xFF55FF55` | Phantom "rested" color (ARGB, green). |
 | `colorWarning` | `0xFFFFFF55` | Phantom "warning" color (ARGB, yellow). |
@@ -151,8 +165,14 @@ it — the in-game screen covers everything — but here are the keys and defaul
 | `syncInterval` | `5` | Seconds between server stat refreshes. |
 | `hudOpacity` | `1.0` | Background/frame opacity, `0.1`–`1.0` *(26.x)*. |
 | `hudHidden` | `false` | Whether the HUD is toggled off *(26.x)*. |
-| `hideStatNames` | `false` | Hide block/item/mob names in HUD rows, leaving only the action. |
+| `statNameMode` | `"NAMES"` | Label display: `NAMES`, `ABBREV` (action only) or `NONE`. |
 | `stats` | *(Phantom)* | Ordered list of tracked stats; each has `statType`, `targetId`, and `label`. |
+
+> [!NOTE]
+> **Updating from 1.4.1 or earlier?** The file migrates itself the first time 1.4.3 loads. The old
+> `colPad` seeds both `labelPad` and `valuePad`, so your HUD keeps exactly the width it had, and
+> `hideStatNames` becomes `statNameMode` (`true` → `ABBREV`, `false` → `NAMES`). Both old keys are
+> dropped from the file on the next save.
 
 > [!TIP]
 > A `stats` entry is just `{ "statType": "...", "targetId": "...", "label": "..." }`. `statType` is one of
