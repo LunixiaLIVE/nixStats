@@ -49,6 +49,11 @@
 - **Per-column width controls.** Tune the icon→label gap, the label column and the value column
   independently, plus the width the middle column takes when no row uses it — set that to `0` and a
   name-less HUD collapses to icons hard against the numbers. Columns still auto-fit their content.
+- **Abbreviate large values** *(optional)*. Shorten big counts to `1.5K` / `2.3M` / `1.1B` so the value
+  column stays narrow. Off by default, and only applied where the number shown *is* the raw count —
+  distances, times, the phantom clock, advancement progress and tenths-formatted damage stats keep the
+  format Minecraft gave them. Counts truncate rather than round, so a counter never reads higher than it
+  actually is: 999,999 shows as `999.9K`, not `1M`.
 - **Adjustable HUD opacity** *(26.x)*. Fade the background and frame from `0%`–`100%`; text and icons
   stay fully opaque so the numbers never get harder to read.
 - **Show / Hide the whole HUD** *(26.x)*. A second rebindable keybind toggles the sidebar off and on,
@@ -114,6 +119,7 @@ applied until you hit **Save**.
 - **Names** — cycle **Show Names** → **Show Abbrev** → **Show None** for the label on each row. The
   button's caption is always the mode in effect. General stats, advancements and the phantom timer keep
   their full label in every mode, since their icon alone wouldn't identify them.
+- **Values** — toggle between the full count (`1,234,567`) and an abbreviated one (`1.2M`).
 - **Stats** — a scrollable list; use **↑ / ↓** to reorder, **×** to remove, and **+ Add Stat** to open the
   picker.
 - **Set Position** — enter drag mode to place the frame; **Reset Position** returns it to the top-right.
@@ -166,6 +172,7 @@ it — the in-game screen covers everything — but here are the keys and defaul
 | `hudOpacity` | `1.0` | Background/frame opacity, `0.1`–`1.0` *(26.x)*. |
 | `hudHidden` | `false` | Whether the HUD is toggled off *(26.x)*. |
 | `statNameMode` | `"NAMES"` | Label display: `NAMES`, `ABBREV` (action only) or `NONE`. |
+| `abbreviateValues` | `false` | Shorten large plain counts to `1.5K` / `2.3M` / `1.1B`. |
 | `stats` | *(Phantom)* | Ordered list of tracked stats; each has `statType`, `targetId`, and `label`. |
 
 > [!NOTE]
