@@ -5,7 +5,7 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
-## [1.4.3] — 2026-08-16
+## [1.4.2] — 2026-08-16
 
 Three-state name display, per-column width controls, and abbreviated values.
 
