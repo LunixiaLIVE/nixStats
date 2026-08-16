@@ -32,8 +32,27 @@ public class NixStatsConfig {
     // Text scale relative to HUD scale: 0.5 to 2.0
     public float textScale = 1.0f;
 
-    // Extra padding added to each column's content width (0â€“20 base units)
-    public int colPad = 2;
+    // Per-column widths (0–20 base units each). The columns stay auto-fit to their
+    // content; these tune the breathing room around it.
+    //   iconGap  — gap between the row icon and the label      (was the fixed ICON_GAP = 3)
+    //   labelPad — padding added to the widest label's width
+    //   valuePad — padding added to the widest value's width
+    public int iconGap  = 3;
+    public int labelPad = 2;
+    public int valuePad = 2;
+
+    // Width the middle (label) column takes when *no* row populates it — i.e. every row
+    // is a type that sheds its name and the mode is Show None. Default 0 so the column
+    // vanishes and the icons sit right against the numbers. As soon as one row does keep
+    // a label (a Phantom or advancement row, say), the column auto-fits that instead and
+    // this is ignored.
+    public int emptyLabelWidth = 0;
+
+    // Pre-1.4.2's single knob, which padded the label and value columns together. Kept
+    // only to seed the three above on first load; boxed so Gson leaves it null when
+    // absent, and nulled after migrating so it drops out of the file on the next save.
+    @Deprecated
+    private Integer colPad;
 
     // Sidebar title text
     public String sidebarTitle = "nixStats";
@@ -56,10 +75,16 @@ public class NixStatsConfig {
     // Whether the HUD is hidden (toggled by the show/hide keybind)
     public boolean hudHidden = false;
 
-    // Drop the block/item/mob name from HUD rows, leaving only the action ("Mined",
-    // "Killed", ...) - the row icon still identifies the subject, and the frame narrows
+    // How much of each HUD row's label to draw: the full name, the action alone, or
+    // nothing at all — the row icon still identifies the subject, and the frame narrows
     // to suit. Display only: tracked stats and their stored labels are untouched.
-    public boolean hideStatNames = false;
+    public StatNameMode statNameMode = StatNameMode.NAMES;
+
+    // 1.4.1's two-state flag, kept only so an existing config migrates on first load.
+    // Boxed so Gson leaves it null when absent; nulled out after migrating, and Gson
+    // omits nulls, so it drops out of the file on the next save.
+    @Deprecated
+    private Boolean hideStatNames;
 
     // Tracked stats displayed in the sidebar (in order)
     public List<StatEntry> stats = new ArrayList<>();
@@ -77,7 +102,8 @@ public class NixStatsConfig {
                 if (instance.stats == null)        instance.stats = new ArrayList<>();
                 if (instance.sidebarTitle == null) instance.sidebarTitle = "nixStats";
                 if (instance.textScale <= 0)       instance.textScale = 1.0f;
-                if (instance.colPad < 0)           instance.colPad = 2;
+                instance.migrateColumnPads();
+                instance.migrateStatNameMode();
                 instance.hudOpacity = Math.max(0f, Math.min(1f, instance.hudOpacity));
                 if (instance.stats.isEmpty())      instance.stats.add(StatEntry.phantom());
             } catch (Exception e) {
@@ -87,6 +113,46 @@ public class NixStatsConfig {
             instance = defaultConfig();
         }
         save();
+    }
+
+    /**
+     * Settle the three column pads after a load.
+     *
+     * <p>A pre-1.4.2 config carries only {@code colPad}, which padded the label and value
+     * columns together — seeding both from it leaves every existing HUD exactly the width
+     * it was. {@code iconGap} has no old counterpart, so it takes the 3 that used to be
+     * hard-coded as {@code StatSidebar.ICON_GAP}.
+     */
+    @SuppressWarnings("deprecation")
+    private void migrateColumnPads() {
+        if (colPad != null) {
+            labelPad = colPad;
+            valuePad = colPad;
+            colPad   = null;
+        }
+        iconGap         = Math.max(0, Math.min(20, iconGap));
+        labelPad        = Math.max(0, Math.min(20, labelPad));
+        valuePad        = Math.max(0, Math.min(20, valuePad));
+        emptyLabelWidth = Math.max(0, Math.min(20, emptyLabelWidth));
+    }
+
+    /**
+     * Settle {@link #statNameMode} after a load.
+     *
+     * <p>1.4.1 never wrote a mode, so a file still carrying the old boolean predates the
+     * field entirely and that boolean is authoritative: {@code true} meant "action only",
+     * which is now {@link StatNameMode#ABBREV}. Keying off the flag rather than off a null
+     * mode matters because Gson runs the field initialiser, so an absent mode arrives as
+     * NAMES rather than null. Gson does yield null for an unrecognised enum name, hence
+     * the second guard.
+     */
+    @SuppressWarnings("deprecation")
+    private void migrateStatNameMode() {
+        if (hideStatNames != null) {
+            statNameMode  = Boolean.TRUE.equals(hideStatNames) ? StatNameMode.ABBREV : StatNameMode.NAMES;
+            hideStatNames = null;
+        }
+        if (statNameMode == null) statNameMode = StatNameMode.NAMES;
     }
 
     private static NixStatsConfig defaultConfig() {

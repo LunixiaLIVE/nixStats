@@ -5,6 +5,26 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.4.3] — 2026-08-16
+
+Three-state name display, and per-column width controls.
+
+### Added
+- **Show Names / Show Abbrev / Show None** — the config screen's name button now cycles three states instead of two, and its caption always reads the mode in effect. **Show Names** draws the full label (*Stone Mined*), **Show Abbrev** keeps only the action (*Mined*), and **Show None** drops the label entirely so a row is just its icon and its number. Under Show None the same block listed under several categories is indistinguishable — that ambiguity is intended, and the icon plus the count is the point.
+- **Per-column width controls** — the single `Pad` spinner became three, and the icon gap became adjustable: **IGap** (icon → label), **LPad** (label column) and **VPad** (value column), each `0`–`20`. Columns still auto-fit their content; these tune the breathing room around it.
+- **ECol** — the width the middle column takes when *no* row populates it, `0`–`20`, default `0`. With every row shedding its name under Show None, the column now collapses completely and the icons sit against the numbers. As soon as one row keeps a label — a Phantom or advancement row — the column auto-fits that instead and ECol is ignored.
+
+### Changed
+- The sidebar's minimum width is now sized to its **title bar** rather than a flat 80px. The old floor was wider than a fully collapsed HUD, so an emptied label column made no visible difference. A HUD whose content computes narrower than 80px will now render narrower than it did before; the title can still never clip.
+- The config screen's spinners are regrouped into a row of six sizing controls (Scale / Text / IGap / LPad / VPad / ECol) and a row of four (Sync / Warn / Crit / Opac). Same two rows as before — nothing moved vertically.
+
+### Notes
+- **Your existing config migrates automatically on first launch.** `colPad` seeds both `labelPad` and `valuePad`, so every HUD keeps exactly the width it had; `iconGap` takes the 3 that used to be hard-coded. 1.4.1's `hideStatNames` becomes `statNameMode` — `true` maps to `Show Abbrev`, `false` to `Show Names`. Both old keys are dropped from `nixstats.json` on the next save.
+- Display only, as before — nothing about what is tracked, read, or saved changes.
+
+### Requirements
+- **Java 25**, Minecraft 26.1.x. Client-side; Fabric also needs Fabric API.
+
 ## [1.4.1] — 2026-08-15
 
 A Names toggle that hides block/item/mob names to keep the HUD narrow.

@@ -41,15 +41,20 @@ public class StatEntry {
     }
 
     /**
-     * Label as it should appear in the HUD. With {@code hideNames} set, item/block/mob
-     * rows show only their action and lean on the icon for identity. Everything else
-     * keeps its full label: General stats all share one generic page icon, and for
-     * advancements and the phantom timer the name *is* the meaning.
+     * Label as it should appear in the HUD. Away from {@link StatNameMode#NAMES},
+     * item/block/mob rows shed their name — down to the action alone, or to nothing —
+     * and lean on the icon for identity. Under NONE the same subject listed under
+     * several categories becomes indistinguishable; that ambiguity is by design.
+     *
+     * <p>Everything else keeps its full label in every mode: General stats all share one
+     * generic page icon, and for advancements and the phantom timer the name *is* the
+     * meaning, so a bare icon would say nothing.
      */
-    public static String displayLabel(StatEntry entry, boolean hideNames) {
+    public static String displayLabel(StatEntry entry, StatNameMode mode) {
         if (entry == null) return "";
-        if (!hideNames)    return entry.label;
+        if (mode == null || mode == StatNameMode.NAMES) return entry.label;
         String action = actionOnlyLabel(entry.statType);
-        return action != null ? action : entry.label;
+        if (action == null) return entry.label;          // no icon-carried identity to fall back on
+        return mode == StatNameMode.NONE ? "" : action;
     }
 }
