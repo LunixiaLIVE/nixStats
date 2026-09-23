@@ -5,6 +5,24 @@ Client-side only.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/); versioning per [SemVer](https://semver.org/).
 
+## [1.4.3] — 2026-09-23
+
+Minecraft 26.3 support, shipped as one jar for every 26.x release so far.
+
+### Added
+- Minecraft **26.3** support.
+
+### Changed
+- **One jar for Minecraft 26.1 through 26.3** — 26.1, 26.1.1, 26.1.2, 26.2 and 26.3 — on both Fabric and NeoForge, replacing the separate 26.1.x and 26.2.x jars. 26.3 renamed several things nixStats reads, so each of those now goes through a form that is the same on every 26.x release; you don't pick between jars any more.
+- The jar is now named `_MC-26.1-3`, and the code lives on the `multi_26.1-3` branch (`multi_26.1` and `multi_26.2` are retired).
+- The stat picker's item-name tooltip is now drawn by Minecraft's standard tooltip layer. Same text; it sits on top of everything else on screen.
+
+### Fixed
+- The keybind category in **Options → Controls** showed as the raw key `key.category.nixstats.config`; it now reads **NixStats Config**.
+
+### Requirements
+- **Java 25**, Minecraft 26.1–26.3. Client-side; Fabric also needs Fabric API for your Minecraft version.
+
 ## [1.4.2] — 2026-08-16
 
 Three-state name display, per-column width controls, and abbreviated values.
