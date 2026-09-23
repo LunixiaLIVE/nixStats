@@ -215,13 +215,14 @@ it — the in-game screen covers everything — but here are the keys and defaul
 
 | Branch | Minecraft | Loaders | Dependencies | Log |
 |:------:|:---------:|:-------:|:------------:|:---:|
-| [`multi_26.2`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.2) | 26.2.x | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.2/CHANGELOG.md) |
-| [`multi_26.1`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.1) | 26.1, 26.1.1, 26.1.2 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.1/CHANGELOG.md) |
+| [`multi_26.1-3`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.1-3) | 26.1 – 26.3 *(one jar for all)* | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.1-3/CHANGELOG.md) |
 | [`multi_1.21.11`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.11) | 1.21.11 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.11/CHANGELOG.md) |
 | [`multi_1.21.9`](https://github.com/LunixiaLIVE/nixStats/tree/multi_1.21.9) | 1.21.9–1.21.10 | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_1.21.9/CHANGELOG.md) |
+| [`multi_26.2`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.2) | 26.2.x *(archived)* | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.2/CHANGELOG.md) |
+| [`multi_26.1`](https://github.com/LunixiaLIVE/nixStats/tree/multi_26.1) | 26.1, 26.1.1, 26.1.2 *(archived)* | Fabric · NeoForge | Fabric API *(Fabric only)* | [📄](https://github.com/LunixiaLIVE/nixStats/blob/multi_26.1/CHANGELOG.md) |
 
 > [!TIP]
-> Every `multi_*` branch builds **one jar that runs on both Fabric and NeoForge**. On 26.x that's a shared universal jar (Minecraft is unobfuscated there); on 1.21.x it's a jar-in-jar bundle (`-multi.jar`) with the Fabric and NeoForge builds nested inside, each loader picking its own. Per-loader `-fabric` / `-neoforge` jars are produced too (`build/staging/`). Fully self-contained — **no extra library mods to install**.
+> Every `multi_*` branch builds **one `-multi.jar` that runs on both Fabric and NeoForge**. On 26.x it's a single merged jar (Minecraft is unobfuscated there); on 1.21.x it's a jar-in-jar bundle with the Fabric and NeoForge builds nested inside, each loader picking its own. Per-loader `-fabric` / `-neoforge` jars are produced too (`build/staging/`). Fully self-contained — **no extra library mods to install**.
 
 <details>
 <summary>🛠️ <b>Building from source</b></summary>
@@ -229,12 +230,12 @@ it — the in-game screen covers everything — but here are the keys and defaul
 Each code branch is a self-contained Gradle project. Grab the branch for your Minecraft version:
 
 ```bash
-git clone -b multi_26.2 https://github.com/LunixiaLIVE/nixStats.git
+git clone -b multi_26.1-3 https://github.com/LunixiaLIVE/nixStats.git
 cd nixStats
 ./gradlew build
 ```
 
-The build output lands in `build/libs/` (a universal jar on 26.x, a `-multi.jar` jar-in-jar bundle on 1.21.x) — drop it into your `mods/` folder on either loader.
+The `-multi` jar lands in `build/libs/` — drop it into your `mods/` folder on either loader.
 </details>
 
 ## 📄 License
