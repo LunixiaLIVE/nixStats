@@ -15,13 +15,13 @@ license = "MIT"
 [[dependencies.nixstats]]
     modId = "neoforge"
     type = "required"
-    versionRange = "[26.2,26.3)"
+    versionRange = "${mc_range_neoforge}"
     ordering = "NONE"
     side = "CLIENT"
 
 [[dependencies.nixstats]]
     modId = "minecraft"
     type = "required"
-    versionRange = "[26.2,26.3)"
+    versionRange = "${mc_range_neoforge}"
     ordering = "NONE"
     side = "CLIENT"

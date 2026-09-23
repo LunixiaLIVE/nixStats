@@ -397,7 +397,7 @@ public class StatSidebar {
             Minecraft mc = Minecraft.getInstance();
             AdvancementHolder h = Advancements.byId(mc, entry.targetId);
             if (h != null && h.value().display().isPresent())
-                return h.value().display().get().getIcon().create();
+                return Advancements.icon(h.value().display().get());
             return new ItemStack(Items.PAPER);
         }
         if ("advancement_total".equals(entry.statType)) {

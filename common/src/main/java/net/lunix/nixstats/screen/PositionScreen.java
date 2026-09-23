@@ -8,7 +8,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
 
 public class PositionScreen extends Screen {
 
@@ -105,7 +104,9 @@ public class PositionScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+        // isEscape(), not a key-code compare: 26.3 moved to SDL key codes (Escape 256 -> 41), and a
+        // constant is baked into the class at compile time, so it would be wrong on some 26.x line.
+        if (event.isEscape()) {
             minecraft.setScreenAndShow(parent);
             return true;
         }

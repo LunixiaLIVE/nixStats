@@ -1,10 +1,12 @@
 package net.lunix.nixstats;
 
 import net.lunix.nixstats.mixin.ClientAdvancementsAccessor;
+import net.lunix.nixstats.mixin.DisplayInfoAccessor;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementNode;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.AdvancementTree;
+import net.minecraft.advancements.DisplayInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.resources.Identifier;
@@ -34,7 +36,7 @@ public final class Advancements {
     public static AdvancementTree clientTree(Minecraft mc) {
         if (mc.getConnection() == null) return null;
         ClientAdvancements ca = mc.getConnection().getAdvancements();
-        return ca != null ? ca.getTree() : null;
+        return ca != null ? ((ClientAdvancementsAccessor) ca).nixstats$getTree() : null;
     }
 
     /**
@@ -144,19 +146,27 @@ public final class Advancements {
         for (AdvancementNode node : tree.roots()) {
             AdvancementHolder h = node.holder();
             if (h.id().getNamespace().equals(namespace) && h.value().display().isPresent())
-                return h.value().display().get().getIcon().create();
+                return icon(h.value().display().get());
         }
         for (AdvancementHolder h : displayable(mc)) {
             if (h.id().getNamespace().equals(namespace))
-                return h.value().display().get().getIcon().create();
+                return icon(h.value().display().get());
         }
         return ItemStack.EMPTY;
+    }
+
+    /**
+     * An advancement's icon as a fresh stack. Read through {@link DisplayInfoAccessor} because the
+     * getter was renamed in 26.3 ({@code getIcon()} -> {@code icon()}) while the field was not.
+     */
+    public static ItemStack icon(DisplayInfo display) {
+        return ((DisplayInfoAccessor) (Object) display).nixstats$getIcon().create();
     }
 
     /** Advancement title as plain text, or the id if it somehow has no display. */
     public static String title(AdvancementHolder h) {
         return h.value().display()
-            .map(d -> d.getTitle().getString())
+            .map(d -> ((DisplayInfoAccessor) (Object) d).nixstats$getTitle().getString())
             .orElse(h.id().toString());
     }
 

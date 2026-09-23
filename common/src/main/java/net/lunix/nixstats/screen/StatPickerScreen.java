@@ -7,8 +7,6 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -368,11 +366,9 @@ public class StatPickerScreen extends Screen {
         super.extractRenderState(g, mouseX, mouseY, partialTick);
 
         if (hoveredStack != null) {
-            g.tooltip(font,
-                List.of(ClientTooltipComponent.create(hoveredStack.getHoverName().getVisualOrderText())),
-                mouseX, mouseY,
-                DefaultTooltipPositioner.INSTANCE,
-                (Identifier) null);
+            // The deferred form: its signature is the same on every 26.x line, where the immediate
+            // tooltip(...) gained a parameter in 26.3.
+            g.setTooltipForNextFrame(font, hoveredStack.getHoverName(), mouseX, mouseY);
         }
     }
 

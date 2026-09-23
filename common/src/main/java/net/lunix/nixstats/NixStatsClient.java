@@ -10,7 +10,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 /**
  * Common (loader-agnostic) client logic for nixStats. No mod-loader API here —
@@ -51,7 +51,7 @@ public final class NixStatsClient {
         );
         openConfigKey = new KeyMapping(
             "key.nixstats.config",
-            GLFW.GLFW_KEY_UNKNOWN,
+            InputConstants.UNKNOWN.getValue(),
             configCategory
         );
         return openConfigKey;
@@ -66,7 +66,7 @@ public final class NixStatsClient {
         }
         toggleHudKey = new KeyMapping(
             "key.nixstats.toggle",
-            GLFW.GLFW_KEY_UNKNOWN,
+            InputConstants.UNKNOWN.getValue(),
             configCategory
         );
         return toggleHudKey;
